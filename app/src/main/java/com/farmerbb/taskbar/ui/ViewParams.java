@@ -28,13 +28,22 @@ public class ViewParams {
     public int gravity;
     public int flags;
     public int bottomMargin;
+    public int offsetX;
+    public int offsetY;
 
     public ViewParams(int width, int height, int gravity, int flags, int bottomMargin) {
+        this(width, height, gravity, flags, bottomMargin, 0, 0);
+    }
+
+    public ViewParams(int width, int height, int gravity, int flags,
+                       int bottomMargin, int offsetX, int offsetY) {
         this.width = width;
         this.height = height;
         this.gravity = gravity;
         this.flags = flags;
         this.bottomMargin = bottomMargin;
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
     }
 
     public WindowManager.LayoutParams toWindowManagerParams() {
@@ -51,6 +60,13 @@ public class ViewParams {
 
         if(bottomMargin > -1)
             wmParams.y = bottomMargin;
+
+        // Apply offset
+        if(offsetX != 0)
+            wmParams.x = offsetX;
+
+        if(offsetY != 0)
+            wmParams.y = (bottomMargin > -1 ? bottomMargin : 0) + offsetY;
 
         U.allowReflection();
         try {
@@ -70,14 +86,18 @@ public class ViewParams {
     }
 
     public ViewParams updateWidth(int width) {
-        return new ViewParams(width, height, gravity, flags, bottomMargin);
+        return new ViewParams(width, height, gravity, flags, bottomMargin, offsetX, offsetY);
     }
 
     public ViewParams updateHeight(int height) {
-        return new ViewParams(width, height, gravity, flags, bottomMargin);
+        return new ViewParams(width, height, gravity, flags, bottomMargin, offsetX, offsetY);
     }
 
     public ViewParams updateBottomMargin(int bottomMargin) {
-        return new ViewParams(width, height, gravity, flags, bottomMargin);
+        return new ViewParams(width, height, gravity, flags, bottomMargin, offsetX, offsetY);
+    }
+
+    public ViewParams updateOffset(int offsetX, int offsetY) {
+        return new ViewParams(width, height, gravity, flags, bottomMargin, offsetX, offsetY);
     }
 }
