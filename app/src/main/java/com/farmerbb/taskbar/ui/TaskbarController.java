@@ -228,6 +228,8 @@ public class TaskbarController extends UIController {
         }
     };
 
+    private SharedPreferences.OnSharedPreferenceChangeListener prefChangeListener;
+
     public TaskbarController(Context context) {
         super(context);
     }
@@ -390,11 +392,12 @@ public class TaskbarController extends UIController {
 
         startRefreshingRecents();
 
-        pref.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
+        prefChangeListener = (sharedPreferences, key) -> {
             if(PREF_HIDE_START_BUTTON.equals(key)) {
                 U.restartTaskbar(context);
             }
-        });
+        };
+        pref.registerOnSharedPreferenceChangeListener(prefChangeListener);
 
         host.addView(layout, params);
 
@@ -1534,6 +1537,10 @@ public class TaskbarController extends UIController {
             manager.listen(listener, PhoneStateListener.LISTEN_NONE);
 
             U.unregisterReceiver(context, notificationCountReceiver);
+        }
+
+        if(prefChangeListener != null) {
+            pref.unregisterOnSharedPreferenceChangeListener(prefChangeListener);
         }
 
         isFirstStart = true;

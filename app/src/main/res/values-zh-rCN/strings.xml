@@ -128,6 +128,7 @@
     <string name="tb_clear_pinned_apps">重置各个应用的首选项</string>
 
     <string name="tb_pref_title_hide_foreground">隐藏前台应用程序的图标</string>
+    <string name="tb_pref_title_hide_start_button">隐藏开始按钮</string>
     <string name="tb_pref_summary_hide_foreground">可能降低性能</string>
 
     <string name="tb_pref_title_theme">主题</string>
