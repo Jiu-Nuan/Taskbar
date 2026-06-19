@@ -41,8 +41,9 @@ public class AppEntry implements Serializable {
     private Long totalTimeInForeground;
     private transient Drawable icon;
     private byte[] iconByteArray;
-    private byte[] customIconByteArray;  // 自定义图标压缩字节，null 表示使用默认
-    private String customText;           // 替代文字，最长 2 字符，null/空表示不启用
+    private byte[] customIconByteArray;  // custom icon bytes, null means use default icon
+    private String customText;           // custom display text, max 2 chars, null/empty means disabled
+    private transient Drawable customIcon;
 
     public AppEntry(String packageName, String componentName, String label, Drawable icon, boolean shouldCompress) {
         this.packageName = packageName;
@@ -153,9 +154,11 @@ public class AppEntry implements Serializable {
     }
 
     public Drawable getCustomIcon(Context context) {
-        if(customIconByteArray != null)
-            return new BitmapDrawable(context.getResources(),
-                    BitmapFactory.decodeByteArray(customIconByteArray, 0, customIconByteArray.length));
-        return null;
+        if(customIcon == null) {
+            if(customIconByteArray != null)
+                customIcon = new BitmapDrawable(context.getResources(),
+                        BitmapFactory.decodeByteArray(customIconByteArray, 0, customIconByteArray.length));
+        }
+        return customIcon;
     }
 }
