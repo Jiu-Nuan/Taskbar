@@ -506,4 +506,11 @@
     <string name="tb_override_freeform_unsupported_description">This version of Android does not support freeform mode on displays that do not set their default windowing mode to freeform (such as the built-in device display).\n\nIf you believe this is in error, toggle this setting on to force-enable the \'Freeform mode\" settings page.</string>
 
     <string name="tb_shizuku_successful">Successfully enabled additional settings via Shizuku</string>
+
+    <string name="tb_customize_icon">Customize icon</string>
+    <string name="tb_customize_text">Display text (max 2 chars)</string>
+    <string name="tb_custom_text_hint">Enter text...</string>
+    <string name="tb_select_custom_icon">Choose icon</string>
+    <string name="tb_reset_to_default">Reset to default</string>
+
 </resources>

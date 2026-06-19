@@ -16,14 +16,23 @@
 package com.farmerbb.taskbar.activity;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Process;
+import android.provider.MediaStore;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
+
+import java.io.IOException;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,6 +58,7 @@ public class PinnedAppsActivity extends AppCompatActivity {
     private PinnedBlockedApps pba;
     private List<AppEntry> pinnedApps;
     private PinnedAppsAdapter adapter;
+    private AppEntry currentEditingEntry;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,7 +148,78 @@ public class PinnedAppsActivity extends AppCompatActivity {
     }
 
     private void showCustomizeDialog(AppEntry entry) {
-        // Placeholder — will be filled in Task 6
+        currentEditingEntry = entry;
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.tb_pinned_app_customize_dialog, null);
+
+        ImageView iconPreview = dialogView.findViewById(R.id.custom_icon_preview);
+        EditText customTextInput = dialogView.findViewById(R.id.custom_text_input);
+
+        if(entry.hasCustomIcon()) {
+            iconPreview.setImageDrawable(entry.getCustomIcon(this));
+        } else {
+            iconPreview.setImageDrawable(entry.getIcon(this));
+        }
+
+        if(entry.hasCustomText()) {
+            customTextInput.setText(entry.getCustomText());
+        }
+
+        dialogView.findViewById(R.id.btn_select_icon).setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("image/*");
+            startActivityForResult(Intent.createChooser(intent,
+                    getString(R.string.tb_select_custom_icon)), 2);
+        });
+
+        dialogView.findViewById(R.id.btn_reset_icon).setOnClickListener(v -> {
+            currentEditingEntry.setCustomIconByteArray(null);
+            iconPreview.setImageDrawable(currentEditingEntry.getIcon(this));
+        });
+
+        new AlertDialog.Builder(this)
+                .setTitle(entry.getLabel())
+                .setView(dialogView)
+                .setPositiveButton(R.string.tb_action_ok, (dialog, which) -> {
+                    String customText = customTextInput.getText().toString().trim();
+                    if(customText.isEmpty()) {
+                        currentEditingEntry.setCustomText(null);
+                    } else {
+                        if(customText.length() > 2) customText = customText.substring(0, 2);
+                        currentEditingEntry.setCustomText(customText);
+                    }
+                    syncEntryCustomization();
+                    reloadPinnedApps();
+                    U.restartTaskbar(this);
+                })
+                .setNegativeButton(R.string.tb_action_cancel, null)
+                .show();
+    }
+
+    private void syncEntryCustomization() {
+        List<AppEntry> current = PinnedBlockedApps.getInstance(this).getPinnedApps();
+        for(AppEntry e : current) {
+            if(e.getComponentName().equals(currentEditingEntry.getComponentName())) {
+                e.setCustomText(currentEditingEntry.getCustomText());
+                e.setCustomIconByteArray(currentEditingEntry.getCustomIconByteArray());
+                break;
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 2 && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            try {
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), data.getData());
+                BitmapDrawable drawable = new BitmapDrawable(getResources(), bitmap);
+                currentEditingEntry.setCustomIconFromDrawable(drawable);
+                Toast.makeText(this, "Icon updated", Toast.LENGTH_SHORT).show();
+            } catch (IOException e) {
+                Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void reloadPinnedApps() {
