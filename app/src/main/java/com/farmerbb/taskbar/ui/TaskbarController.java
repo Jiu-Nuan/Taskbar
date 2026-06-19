@@ -62,6 +62,7 @@ import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.text.format.DateFormat;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -1596,6 +1597,50 @@ public class TaskbarController extends UIController {
         ImageView imageView = convertView.findViewById(R.id.icon);
         ImageView imageView2 = convertView.findViewById(R.id.shortcut_icon);
         imageView.setImageDrawable(entry.getIcon(context));
+
+        // Check for pinned app customization
+        boolean isPinned;
+        String tp = TaskbarPosition.getTaskbarPosition(context);
+        if(tp.contains("vertical"))
+            isPinned = position >= list.size() - numOfPinnedApps;
+        else
+            isPinned = position < numOfPinnedApps;
+
+        if(isPinned) {
+            int alpha = pref.getInt(PREF_PINNED_APP_ALPHA, 100);
+            float alphaFloat = alpha / 100f;
+
+            if(entry.hasCustomText()) {
+                imageView.setVisibility(View.GONE);
+                TextView textView = convertView.findViewById(R.id.custom_text);
+                if(textView == null) {
+                    textView = new TextView(context);
+                    textView.setId(R.id.custom_text);
+                    textView.setLayoutParams(new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT,
+                            FrameLayout.LayoutParams.MATCH_PARENT));
+                    textView.setGravity(Gravity.CENTER);
+                    textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                    textView.setTextColor(U.getAccentColor(context));
+                    ((FrameLayout) convertView).addView(textView, 1);
+                }
+                textView.setText(entry.getCustomText());
+                textView.setAlpha(alphaFloat);
+                textView.setVisibility(View.VISIBLE);
+            } else {
+                TextView textView = convertView.findViewById(R.id.custom_text);
+                if(textView != null) textView.setVisibility(View.GONE);
+                imageView.setVisibility(View.VISIBLE);
+
+                if(entry.hasCustomIcon()) {
+                    imageView.setImageDrawable(entry.getCustomIcon(context));
+                }
+                imageView.setImageAlpha((int)(alphaFloat * 255));
+            }
+        } else {
+            imageView.setImageAlpha(255);
+        }
+
         imageView2.setBackgroundColor(U.getAccentColor(context));
 
         String taskbarPosition = TaskbarPosition.getTaskbarPosition(context);
