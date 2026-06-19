@@ -26,8 +26,10 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.farmerbb.taskbar.R;
+import com.farmerbb.taskbar.activity.PinnedAppsActivity;
 import com.farmerbb.taskbar.activity.SelectAppActivity;
 import com.farmerbb.taskbar.util.Blacklist;
+import com.farmerbb.taskbar.util.PinnedBlockedApps;
 import com.farmerbb.taskbar.util.TopApps;
 import com.farmerbb.taskbar.util.U;
 
@@ -42,6 +44,7 @@ public class GeneralFragment extends SettingsFragment {
 
         // Set OnClickListeners for certain preferences
         findPreference(PREF_BLACKLIST).setOnPreferenceClickListener(this);
+        findPreference(PREF_PINNED_APPS).setOnPreferenceClickListener(this);
 
         if(U.isLibrary(getActivity()) || U.isAndroidTV(getActivity())) {
             getPreferenceScreen().removePreference(findPreference(PREF_NOTIFICATION_SETTINGS));
@@ -95,6 +98,12 @@ public class GeneralFragment extends SettingsFragment {
         if(blacklistPref != null) {
             blacklistPref.setSummary(summary);
         }
+
+        int pinnedCount = PinnedBlockedApps.getInstance(getActivity()).getPinnedApps().size();
+        Preference pinnedPref = findPreference(PREF_PINNED_APPS);
+        if(pinnedPref != null) {
+            pinnedPref.setSummary(getString(R.string.tb_pinned_apps_count, pinnedCount));
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.O)
@@ -104,6 +113,10 @@ public class GeneralFragment extends SettingsFragment {
             case PREF_BLACKLIST:
                 Intent intent = U.getThemedIntent(getActivity(), SelectAppActivity.class);
                 startActivity(intent);
+                break;
+            case PREF_PINNED_APPS:
+                Intent pinnedIntent = U.getThemedIntent(getActivity(), PinnedAppsActivity.class);
+                startActivity(pinnedIntent);
                 break;
             case PREF_NOTIFICATION_SETTINGS:
                 Intent intent2 = new Intent();
