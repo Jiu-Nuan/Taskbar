@@ -181,6 +181,7 @@ public class Constants {
     public static final String PREF_REMOVE_DESKTOP_ICON = "remove_desktop_icon";
     public static final String PREF_REMOVE_DESKTOP_WALLPAPER = "remove_desktop_wallpaper";
     public static final String PREF_RESET_COLORS = "reset_colors";
+    public static final String PREF_RESET_OFFSET = "reset_offset";
     public static final String PREF_RESTORE_SETTINGS = "restore_settings";
     public static final String PREF_SAMSUNG_DIALOG_SHOWN = "samsung_dialog_shown";
     public static final String PREF_SAVE_WINDOW_SIZES = "save_window_sizes";
@@ -210,6 +211,8 @@ public class Constants {
     public static final String PREF_SYSTEM_SETTINGS = "system_settings";
     public static final String PREF_SYS_TRAY = "sys_tray";
     public static final String PREF_TASKBAR_ACTIVE = "taskbar_active";
+    public static final String PREF_TASKBAR_OFFSET_X = "taskbar_offset_x";
+    public static final String PREF_TASKBAR_OFFSET_Y = "taskbar_offset_y";
     public static final String PREF_TASKER_ENABLED = "tasker_enabled";
     public static final String PREF_THEME = "theme";
     public static final String PREF_TIME_OF_SERVICE_START = "time_of_service_start";

@@ -52,6 +52,7 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.os.Vibrator;
 import android.provider.Settings;
 import android.speech.RecognizerIntent;
 
@@ -133,6 +134,14 @@ public class TaskbarController extends UIController {
     private boolean taskbarHiddenTemporarily = false;
     private boolean isRefreshingRecents = false;
     private boolean isFirstStart = true;
+
+    // Drag offset fields
+    private boolean isDragging = false;
+    private float dragStartX, dragStartY;
+    private int initialOffsetX, initialOffsetY;
+    private Vibrator vibrator;
+    private View.OnTouchListener dragTouchListener;
+    private UIHost currentHost;
 
     private boolean startThread2 = false;
     private boolean stopThread2 = false;
@@ -238,18 +247,24 @@ public class TaskbarController extends UIController {
     }
 
     private void drawTaskbar(UIHost host) {
+        currentHost = host;
         IconCache.getInstance(context).clearCache();
 
         // Initialize layout params
         WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         TaskbarPosition.setCachedRotation(windowManager.getDefaultDisplay().getRotation());
 
+        int offsetX = UIController.getOffsetX(context);
+        int offsetY = UIController.getOffsetY(context);
+
         final ViewParams params = new ViewParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 -1,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM,
-                getBottomMargin(context)
+                getBottomMargin(context),
+                offsetX,
+                offsetY
         );
 
         // Determine where to show the taskbar on screen
@@ -340,6 +355,11 @@ public class TaskbarController extends UIController {
         button.setTextColor(accentColor);
 
         applyMarginFix(host, layout, params);
+
+        // Initialize drag support
+        vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        dragTouchListener = new TaskbarDragTouchListener();
+        layout.setOnTouchListener(dragTouchListener);
 
         if(isFirstStart && FreeformHackHelper.getInstance().isInFreeformWorkspace())
             showTaskbar(false);
@@ -1891,5 +1911,128 @@ public class TaskbarController extends UIController {
     private int getResourceIdFor(String name) {
         String packageName = context.getResources().getResourcePackageName(R.drawable.tb_dummy);
         return context.getResources().getIdentifier(name, "drawable", packageName);
+    }
+
+    private class TaskbarDragTouchListener implements View.OnTouchListener {
+        private static final int LONG_PRESS_TIMEOUT = 400;
+        private final Handler dragHandler = new Handler();
+        private Runnable longPressRunnable;
+        private boolean longPressTriggered = false;
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            switch(event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    if(isTouchOnEmptyArea(v, event)) {
+                        dragStartX = event.getRawX();
+                        dragStartY = event.getRawY();
+                        initialOffsetX = UIController.getOffsetX(context);
+                        initialOffsetY = UIController.getOffsetY(context);
+
+                        longPressTriggered = false;
+                        longPressRunnable = () -> {
+                            longPressTriggered = true;
+                            enterDragMode(v);
+                        };
+                        dragHandler.postDelayed(longPressRunnable, LONG_PRESS_TIMEOUT);
+                        return true;
+                    }
+                    break;
+
+                case MotionEvent.ACTION_MOVE:
+                    if(longPressTriggered && isDragging) {
+                        float deltaX = event.getRawX() - dragStartX;
+                        float deltaY = event.getRawY() - dragStartY;
+                        int newX = initialOffsetX + (int) deltaX;
+                        int newY = initialOffsetY + (int) deltaY;
+
+                        ViewParams newParams = new ViewParams(
+                                WindowManager.LayoutParams.WRAP_CONTENT,
+                                WindowManager.LayoutParams.WRAP_CONTENT,
+                                getTaskbarGravity(TaskbarPosition.getTaskbarPosition(context)),
+                                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                                        | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM,
+                                getBottomMargin(context),
+                                newX,
+                                newY
+                        );
+
+                        try {
+                            if(currentHost != null) currentHost.updateViewLayout(layout, newParams);
+                        } catch (Exception ignored) {}
+                        return true;
+                    }
+                    break;
+
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    dragHandler.removeCallbacks(longPressRunnable);
+                    if(longPressTriggered && isDragging) {
+                        exitDragMode(v, event);
+                    }
+                    longPressTriggered = false;
+                    break;
+            }
+            return false;
+        }
+
+        private boolean isTouchOnEmptyArea(View v, MotionEvent event) {
+            float x = event.getX();
+            float y = event.getY();
+            if(startButton.getVisibility() == View.VISIBLE && isPointInsideView(startButton, x, y)) return false;
+            if(dashboardButton != null && dashboardButton.getVisibility() == View.VISIBLE
+                    && isPointInsideView(dashboardButton, x, y)) return false;
+            if(navbarButtons != null && navbarButtons.getVisibility() == View.VISIBLE
+                    && isPointInsideView(navbarButtons, x, y)) return false;
+            if(button != null && isPointInsideView(button, x, y)) return false;
+            if(scrollView != null && scrollView.getVisibility() == View.VISIBLE
+                    && isTouchInsideScrollViewContent(scrollView, x, y)) return false;
+            return true;
+        }
+
+        private boolean isTouchInsideScrollViewContent(View scrollView, float x, float y) {
+            if(!isPointInsideView(scrollView, x, y)) return false;
+            if(scrollView instanceof ViewGroup) {
+                ViewGroup vg = (ViewGroup) scrollView;
+                if(vg.getChildCount() > 0) {
+                    View content = vg.getChildAt(0);
+                    return isPointInsideView(content, x, y);
+                }
+            }
+            return true;
+        }
+
+        private boolean isPointInsideView(View view, float x, float y) {
+            int[] location = new int[2];
+            view.getLocationInWindow(location);
+            return x >= location[0] && x <= location[0] + view.getWidth()
+                    && y >= location[1] && y <= location[1] + view.getHeight();
+        }
+
+        private void enterDragMode(View v) {
+            isDragging = true;
+            if(vibrator != null && vibrator.hasVibrator())
+                vibrator.vibrate(50);
+            // Visual feedback: apply highlight
+            v.setBackgroundColor(android.graphics.Color.argb(60, 0, 100, 255));
+        }
+
+        private void exitDragMode(View v, MotionEvent event) {
+            isDragging = false;
+            int backgroundTint = U.getBackgroundTint(context);
+            v.setBackgroundColor(backgroundTint);
+
+            float deltaX = event.getRawX() - dragStartX;
+            float deltaY = event.getRawY() - dragStartY;
+            float density = context.getResources().getDisplayMetrics().density;
+            int offsetXDp = Math.round((initialOffsetX + deltaX) / density);
+            int offsetYDp = Math.round((initialOffsetY + deltaY) / density);
+
+            SharedPreferences pref = U.getSharedPreferences(context);
+            pref.edit()
+                    .putInt(PREF_TASKBAR_OFFSET_X, offsetXDp)
+                    .putInt(PREF_TASKBAR_OFFSET_Y, offsetYDp)
+                    .apply();
+        }
     }
 }

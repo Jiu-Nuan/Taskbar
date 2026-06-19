@@ -18,6 +18,7 @@ package com.farmerbb.taskbar.fragment;
 import android.annotation.TargetApi;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -42,6 +43,7 @@ public class GeneralFragment extends SettingsFragment {
 
         // Set OnClickListeners for certain preferences
         findPreference(PREF_BLACKLIST).setOnPreferenceClickListener(this);
+        findPreference(PREF_RESET_OFFSET).setOnPreferenceClickListener(this);
 
         if(U.isLibrary(getActivity()) || U.isAndroidTV(getActivity())) {
             getPreferenceScreen().removePreference(findPreference(PREF_NOTIFICATION_SETTINGS));
@@ -120,6 +122,14 @@ public class GeneralFragment extends SettingsFragment {
                     startActivity(intent2);
                     restartNotificationService = true;
                 } catch (ActivityNotFoundException ignored) {}
+                break;
+            case PREF_RESET_OFFSET:
+                SharedPreferences pref = U.getSharedPreferences(getActivity());
+                pref.edit()
+                        .putInt(PREF_TASKBAR_OFFSET_X, 0)
+                        .putInt(PREF_TASKBAR_OFFSET_Y, 0)
+                        .apply();
+                U.restartTaskbar(getActivity());
                 break;
         }
 
