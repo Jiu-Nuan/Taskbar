@@ -74,7 +74,7 @@ public class PinnedAppsAdapter extends RecyclerView.Adapter<PinnedAppsAdapter.Vi
         holder.itemView.setOnClickListener(v -> listener.onItemClick(entry));
 
         holder.deleteButton.setOnClickListener(v -> {
-            int pos = holder.getBindingAdapterPosition();
+            int pos = holder.getAdapterPosition();
             if(pos != RecyclerView.NO_POSITION) {
                 entries.remove(pos);
                 notifyItemRemoved(pos);

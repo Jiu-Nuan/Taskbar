@@ -2,12 +2,15 @@ package com.farmerbb.taskbar.util
 
 import android.content.ComponentName
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Process
 import android.os.UserManager
 import androidx.test.core.app.ApplicationProvider
 import com.farmerbb.taskbar.R
 import com.farmerbb.taskbar.activity.MainActivity
+import com.google.common.truth.Truth.assertThat
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -79,5 +82,45 @@ class AppEntryTest {
         appEntry.totalTimeInForeground = 100
         Assert.assertEquals(100, appEntry.totalTimeInForeground)
         appEntry.totalTimeInForeground = 0
+    }
+
+    @Test
+    fun `test customText setter and getter`() {
+        val entry = AppEntry("com.test", "com.test.Main", "Test", null, false)
+
+        entry.customText = "AB"
+        assertThat(entry.customText).isEqualTo("AB")
+        assertThat(entry.hasCustomText()).isTrue()
+    }
+
+    @Test
+    fun `test customText max length`() {
+        val entry = AppEntry("com.test", "com.test.Main", "Test", null, false)
+
+        entry.customText = "ABCDEFG"
+        assertThat(entry.customText).isEqualTo("AB")
+    }
+
+    @Test
+    fun `test customText empty and null`() {
+        val entry = AppEntry("com.test", "com.test.Main", "Test", null, false)
+
+        entry.customText = ""
+        assertThat(entry.hasCustomText()).isFalse()
+
+        entry.customText = null
+        assertThat(entry.hasCustomText()).isFalse()
+    }
+
+    @Test
+    fun `test customIconByteArray`() {
+        val entry = AppEntry("com.test", "com.test.Main", "Test", null, false)
+
+        val bitmap = Bitmap.createBitmap(48, 48, Bitmap.Config.ARGB_8888)
+        val drawable = BitmapDrawable(context.resources, bitmap)
+        entry.setCustomIconFromDrawable(drawable)
+
+        assertThat(entry.hasCustomIcon()).isTrue()
+        assertThat(entry.customIconByteArray).isNotNull()
     }
 }

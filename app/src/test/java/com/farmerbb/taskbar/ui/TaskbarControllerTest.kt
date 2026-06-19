@@ -50,6 +50,7 @@ import com.farmerbb.taskbar.util.Constants.PREF_HIDE_FOREGROUND
 import com.farmerbb.taskbar.util.Constants.PREF_RECENTS_AMOUNT
 import com.farmerbb.taskbar.util.Constants.PREF_RECENTS_AMOUNT_APP_START
 import com.farmerbb.taskbar.util.Constants.PREF_RECENTS_AMOUNT_RUNNING_APPS_ONLY
+import com.farmerbb.taskbar.util.Constants.PREF_HIDE_START_BUTTON
 import com.farmerbb.taskbar.util.Constants.PREF_RECENTS_AMOUNT_SHOW_ALL
 import com.farmerbb.taskbar.util.Constants.PREF_START_BUTTON_IMAGE
 import com.farmerbb.taskbar.util.Constants.PREF_START_BUTTON_IMAGE_APP_LOGO
@@ -58,6 +59,7 @@ import com.farmerbb.taskbar.util.Constants.PREF_START_BUTTON_IMAGE_DEFAULT
 import com.farmerbb.taskbar.util.Constants.PREF_TIME_OF_SERVICE_START
 import com.farmerbb.taskbar.util.TaskbarPosition
 import com.farmerbb.taskbar.util.U
+import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -690,6 +692,28 @@ class TaskbarControllerTest {
         Assert.assertEquals(Constants.DEFAULT_TEST_USER_ID.toLong(),
                 populatedEntry.getUserId(context))
         Assert.assertEquals(appEntry.lastTimeUsed, populatedEntry.lastTimeUsed)
+    }
+
+    @Test
+    fun `test drawStartButton with hide pref enabled`() {
+        val pref = U.getSharedPreferences(context)
+        pref.edit().putBoolean(PREF_HIDE_START_BUTTON, true).apply()
+
+        val startButton = ImageView(context)
+        uiController.drawStartButton(context, startButton, pref)
+
+        assertThat(startButton.visibility).isEqualTo(View.GONE)
+    }
+
+    @Test
+    fun `test drawStartButton with hide pref disabled`() {
+        val pref = U.getSharedPreferences(context)
+        pref.edit().putBoolean(PREF_HIDE_START_BUTTON, false).apply()
+
+        val startButton = ImageView(context)
+        uiController.drawStartButton(context, startButton, pref)
+
+        assertThat(startButton.visibility).isNotEqualTo(View.GONE)
     }
 
     private fun generateTestAppEntry(index: Int): AppEntry {

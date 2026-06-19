@@ -84,8 +84,8 @@ public class PinnedAppsActivity extends AppCompatActivity {
             @Override
             public boolean onMove(RecyclerView rv, RecyclerView.ViewHolder source,
                                   RecyclerView.ViewHolder target) {
-                int fromPos = source.getBindingAdapterPosition();
-                int toPos = target.getBindingAdapterPosition();
+                int fromPos = source.getAdapterPosition();
+                int toPos = target.getAdapterPosition();
                 adapter.onItemMove(fromPos, toPos);
                 return true;
             }
