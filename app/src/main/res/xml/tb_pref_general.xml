@@ -92,6 +92,10 @@
         android:key="notification_settings"
         android:title="@string/tb_notification_settings"/>
 
+    <Preference
+        android:key="reset_offset"
+        android:title="@string/tb_reset_taskbar_offset"/>
+
     <PreferenceCategory android:key="dummy" android:title="\n\n" />
 
 </PreferenceScreen>

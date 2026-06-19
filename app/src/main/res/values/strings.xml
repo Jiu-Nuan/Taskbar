@@ -132,6 +132,7 @@
     <string name="tb_action_remove">移除</string>
     <string name="tb_action_drag_to_reorder">拖拽排序</string>
     <string name="tb_pinned_apps_count">已置顶 %d 个应用</string>
+    <string name="tb_reset_taskbar_offset">Reset taskbar offset</string>
 
     <string name="tb_pref_title_hide_foreground">Hide icon for foreground application</string>
     <string name="tb_pref_summary_hide_foreground">May reduce performance</string>

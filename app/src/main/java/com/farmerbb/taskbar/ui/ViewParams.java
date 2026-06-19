@@ -61,12 +61,12 @@ public class ViewParams {
         if(bottomMargin > -1)
             wmParams.y = bottomMargin;
 
-        // Apply offset
+        // Apply offset — only when bottomMargin is valid to avoid overwriting sentinel -1
         if(offsetX != 0)
             wmParams.x = offsetX;
 
-        if(offsetY != 0)
-            wmParams.y = (bottomMargin > -1 ? bottomMargin : 0) + offsetY;
+        if(offsetY != 0 && bottomMargin > -1)
+            wmParams.y = bottomMargin + offsetY;
 
         U.allowReflection();
         try {
