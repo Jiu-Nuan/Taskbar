@@ -142,6 +142,7 @@ public class Constants {
     public static final String PREF_HIDE_DONATE = "hide_donate";
     public static final String PREF_HIDE_FOREGROUND = "hide_foreground";
     public static final String PREF_HIDE_ICON_LABELS = "hide_icon_labels";
+    public static final String PREF_HIDE_START_BUTTON = "hide_start_button";
     public static final String PREF_HIDE_TASKBAR = "hide_taskbar";
     public static final String PREF_HIDE_WHEN_KEYBOARD_SHOWN = "hide_when_keyboard_shown";
     public static final String PREF_HSL_ID = "hsl_id";
@@ -164,6 +165,9 @@ public class Constants {
     public static final String PREF_OPEN_TASKBAR_SETTINGS = "open_taskbar_settings";
     public static final String PREF_OVERRIDE_FREEFORM_UNSUPPORTED = "override_freeform_unsupported";
     public static final String PREF_PIN_APP = "pin_app";
+    public static final String PREF_PINNED_APP_ALPHA = "pinned_app_alpha";
+    public static final String PREF_PINNED_APP_ALPHA_PREF = "pinned_app_alpha_pref";
+    public static final String PREF_PINNED_APPS = "pinned_apps";
     public static final String PREF_POSITION = "position";
     public static final String PREF_POWER_BUTTON_WARNING = "power_button_warning";
     public static final String PREF_POWER_MENU = "power_menu";
@@ -181,6 +185,7 @@ public class Constants {
     public static final String PREF_REMOVE_DESKTOP_ICON = "remove_desktop_icon";
     public static final String PREF_REMOVE_DESKTOP_WALLPAPER = "remove_desktop_wallpaper";
     public static final String PREF_RESET_COLORS = "reset_colors";
+    public static final String PREF_RESET_OFFSET = "reset_offset";
     public static final String PREF_RESTORE_SETTINGS = "restore_settings";
     public static final String PREF_SAMSUNG_DIALOG_SHOWN = "samsung_dialog_shown";
     public static final String PREF_SAVE_WINDOW_SIZES = "save_window_sizes";
@@ -210,6 +215,8 @@ public class Constants {
     public static final String PREF_SYSTEM_SETTINGS = "system_settings";
     public static final String PREF_SYS_TRAY = "sys_tray";
     public static final String PREF_TASKBAR_ACTIVE = "taskbar_active";
+    public static final String PREF_TASKBAR_OFFSET_X = "taskbar_offset_x";
+    public static final String PREF_TASKBAR_OFFSET_Y = "taskbar_offset_y";
     public static final String PREF_TASKER_ENABLED = "tasker_enabled";
     public static final String PREF_THEME = "theme";
     public static final String PREF_TIME_OF_SERVICE_START = "time_of_service_start";

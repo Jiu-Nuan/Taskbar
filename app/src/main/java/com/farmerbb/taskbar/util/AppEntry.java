@@ -41,6 +41,8 @@ public class AppEntry implements Serializable {
     private Long totalTimeInForeground;
     private transient Drawable icon;
     private byte[] iconByteArray;
+    private byte[] customIconByteArray;  // 自定义图标压缩字节，null 表示使用默认
+    private String customText;           // 替代文字，最长 2 字符，null/空表示不启用
 
     public AppEntry(String packageName, String componentName, String label, Drawable icon, boolean shouldCompress) {
         this.packageName = packageName;
@@ -113,5 +115,47 @@ public class AppEntry implements Serializable {
 
     public void setTotalTimeInForeground(long totalTimeInForeground) {
         this.totalTimeInForeground = totalTimeInForeground;
+    }
+
+    public byte[] getCustomIconByteArray() {
+        return customIconByteArray;
+    }
+
+    public void setCustomIconByteArray(byte[] customIconByteArray) {
+        this.customIconByteArray = customIconByteArray;
+    }
+
+    public String getCustomText() {
+        return customText;
+    }
+
+    public void setCustomText(String customText) {
+        if(customText != null && customText.length() > 2)
+            customText = customText.substring(0, 2);
+        this.customText = customText;
+    }
+
+    public boolean hasCustomIcon() {
+        return customIconByteArray != null && customIconByteArray.length > 0;
+    }
+
+    public boolean hasCustomText() {
+        return customText != null && !customText.isEmpty();
+    }
+
+    public void setCustomIconFromDrawable(Drawable icon) {
+        if(icon instanceof BitmapDrawable) {
+            Bitmap bitmap = ((BitmapDrawable) icon).getBitmap();
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 0, stream);
+            customIconByteArray = stream.toByteArray();
+        }
+    }
+
+    public Drawable getCustomIcon(Context context) {
+        if(customIconByteArray != null)
+            return new BitmapDrawable(context.getResources(),
+                    BitmapFactory.decodeByteArray(customIconByteArray, 0, customIconByteArray.length));
+        return null;
     }
 }
