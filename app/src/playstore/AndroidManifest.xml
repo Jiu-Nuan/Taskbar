@@ -219,6 +219,20 @@
             android:name=".activity.dark.DesktopIconSelectAppActivityDark"
             android:theme="@style/Taskbar.Dialog.Blacklist.Dark"/>
         <activity
+            android:name=".activity.PinnedAppsActivity"
+            android:theme="@style/Taskbar"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:taskAffinity="com.farmerbb.taskbar.pinnedapps"
+            android:configChanges="uiMode|screenSize"/>
+        <activity
+            android:name=".activity.dark.PinnedAppsActivityDark"
+            android:theme="@style/Taskbar.Dark"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:taskAffinity="com.farmerbb.taskbar.pinnedapps"
+            android:configChanges="uiMode|screenSize"/>
+        <activity
             android:name=".activity.DummyActivity"
             android:documentLaunchMode="always"
             android:excludeFromRecents="true"

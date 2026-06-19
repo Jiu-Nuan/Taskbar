@@ -127,6 +127,11 @@
     <string name="tb_unblock_app">Unblock from recents</string>
     <string name="tb_clear_pinned_apps">Reset per-app preferences</string>
 
+    <string name="tb_pref_title_pinned_apps">管理置顶应用</string>
+    <string name="tb_action_add_pinned_app">添加置顶应用</string>
+    <string name="tb_action_remove">移除</string>
+    <string name="tb_action_drag_to_reorder">拖拽排序</string>
+
     <string name="tb_pref_title_hide_foreground">Hide icon for foreground application</string>
     <string name="tb_pref_summary_hide_foreground">May reduce performance</string>
 
