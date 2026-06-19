@@ -390,6 +390,12 @@ public class TaskbarController extends UIController {
 
         startRefreshingRecents();
 
+        pref.registerOnSharedPreferenceChangeListener((sharedPreferences, key) -> {
+            if(PREF_HIDE_START_BUTTON.equals(key)) {
+                U.restartTaskbar(context);
+            }
+        });
+
         host.addView(layout, params);
 
         isFirstStart = false;
@@ -446,6 +452,11 @@ public class TaskbarController extends UIController {
 
     @VisibleForTesting
     void drawStartButton(Context context, ImageView startButton, SharedPreferences pref) {
+        if(pref.getBoolean(PREF_HIDE_START_BUTTON, false)) {
+            startButton.setVisibility(View.GONE);
+            return;
+        }
+
         Drawable allAppsIcon = ContextCompat.getDrawable(context, R.drawable.tb_all_apps_button_icon);
         int padding = 0;
 

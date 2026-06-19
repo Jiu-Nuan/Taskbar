@@ -299,6 +299,7 @@
 
     <string name="tb_hide_taskbar_disclaimer">Does not apply to apps in freeform mode</string>
     <string name="tb_transparent_start_menu">Transparent start menu</string>
+    <string name="tb_pref_title_hide_start_button">隐藏开始按钮</string>
 
     <string name="tb_launch_games_fullscreen_title">Launch games fullscreen</string>
     <string name="tb_launch_games_fullscreen_message">If an application declares itself to be a game, disallow it from launching in freeform mode</string>
