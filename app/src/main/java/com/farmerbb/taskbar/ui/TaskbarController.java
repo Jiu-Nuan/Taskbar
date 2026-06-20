@@ -2080,8 +2080,11 @@ public class TaskbarController extends UIController {
 
         private void enterDragMode(View v) {
             isDragging = true;
-            if(vibrator != null && vibrator.hasVibrator())
-                vibrator.vibrate(50);
+            if(vibrator != null && vibrator.hasVibrator()) {
+                try {
+                    vibrator.vibrate(50);
+                } catch (SecurityException ignored) {}
+            }
             v.setBackgroundColor(android.graphics.Color.argb(60, 0, 100, 255));
         }
 
