@@ -14,41 +14,59 @@
      limitations under the License.
 -->
 
-<FrameLayout
+<LinearLayout
     android:id="@+id/entry"
     android:layout_width="wrap_content"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <ImageView
-        android:id="@+id/icon"
+    <FrameLayout
+        android:id="@+id/icon_container"
         android:layout_width="@dimen/tb_icon_size"
-        android:layout_height="@dimen/tb_icon_size"
-        android:padding="8dp"
-        tools:src="@drawable/tb_allapps_pressed" />
+        android:layout_height="@dimen/tb_icon_size">
 
-    <ImageView
-        android:id="@+id/shortcut_icon"
-        android:layout_width="12dp"
-        android:layout_height="12dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginBottom="8dp"
-        android:layout_gravity="bottom|left"
-        android:src="@drawable/tb_reply"
-        android:scaleX="-1"
-        android:visibility="gone"
-        tools:visibility="visible" />
-    
-    <ImageView
-        android:id="@+id/running_app_indicator"
-        android:layout_width="wrap_content"
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="@dimen/tb_icon_size"
+            android:layout_height="@dimen/tb_icon_size"
+            android:padding="8dp"
+            tools:src="@drawable/tb_allapps_pressed" />
+
+        <ImageView
+            android:id="@+id/shortcut_icon"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginBottom="8dp"
+            android:layout_gravity="bottom|left"
+            android:src="@drawable/tb_reply"
+            android:scaleX="-1"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <ImageView
+            android:id="@+id/running_app_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="2dp"
+            android:src="@drawable/tb_running_app_indicator"
+            android:visibility="gone"
+            tools:visibility="visible"/>
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/custom_text"
+        android:layout_width="@dimen/tb_icon_size"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center"
-        android:layout_marginBottom="2dp"
-        android:src="@drawable/tb_running_app_indicator"
+        android:gravity="center"
+        android:textSize="10sp"
+        android:maxLines="1"
         android:visibility="gone"
-        tools:visibility="visible"/>
+        tools:visibility="visible"
+        tools:text="AB"/>
 
-</FrameLayout>
+</LinearLayout>

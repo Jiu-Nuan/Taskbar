@@ -38,6 +38,11 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -1632,39 +1637,32 @@ public class TaskbarController extends UIController {
         else
             isPinned = position < numOfPinnedApps;
 
+        // Reset custom text visibility
+        TextView customTextView = convertView.findViewById(R.id.custom_text);
+
         if(isPinned) {
             int alpha = pref.getInt(PREF_PINNED_APP_ALPHA, 100);
             float alphaFloat = alpha / 100f;
 
-            if(entry.hasCustomText()) {
-                imageView.setVisibility(View.GONE);
-                TextView textView = convertView.findViewById(R.id.custom_text);
-                if(textView == null) {
-                    textView = new TextView(context);
-                    textView.setId(R.id.custom_text);
-                    textView.setLayoutParams(new FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.MATCH_PARENT,
-                            FrameLayout.LayoutParams.MATCH_PARENT));
-                    textView.setGravity(Gravity.CENTER);
-                    textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                    textView.setTextColor(U.getAccentColor(context));
-                    ((FrameLayout) convertView).addView(textView, 1);
-                }
-                textView.setText(entry.getCustomText());
-                textView.setAlpha(alphaFloat);
-                textView.setVisibility(View.VISIBLE);
-            } else {
-                TextView textView = convertView.findViewById(R.id.custom_text);
-                if(textView != null) textView.setVisibility(View.GONE);
-                imageView.setVisibility(View.VISIBLE);
+            if(entry.hasCustomIcon()) {
+                Drawable icon = entry.getCustomIcon(context);
+                int radius = context.getResources().getDimensionPixelSize(R.dimen.tb_icon_corner_radius);
+                imageView.setImageDrawable(getRoundedDrawable(icon, radius));
+            }
+            imageView.setImageAlpha((int)(alphaFloat * 255));
 
-                if(entry.hasCustomIcon()) {
-                    imageView.setImageDrawable(entry.getCustomIcon(context));
-                }
-                imageView.setImageAlpha((int)(alphaFloat * 255));
+            // Show custom text below icon
+            if(entry.hasCustomText()) {
+                customTextView.setText(entry.getCustomText());
+                customTextView.setAlpha(alphaFloat);
+                customTextView.setTextColor(U.getAccentColor(context));
+                customTextView.setVisibility(View.VISIBLE);
+            } else if(customTextView != null) {
+                customTextView.setVisibility(View.GONE);
             }
         } else {
             imageView.setImageAlpha(255);
+            if(customTextView != null) customTextView.setVisibility(View.GONE);
         }
 
         imageView2.setBackgroundColor(U.getAccentColor(context));
@@ -1980,6 +1978,24 @@ public class TaskbarController extends UIController {
     private int getResourceIdFor(String name) {
         String packageName = context.getResources().getResourcePackageName(R.drawable.tb_dummy);
         return context.getResources().getIdentifier(name, "drawable", packageName);
+    }
+
+    private Drawable getRoundedDrawable(Drawable drawable, int cornerRadius) {
+        if(drawable instanceof BitmapDrawable) {
+            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+            int size = Math.min(bitmap.getWidth(), bitmap.getHeight());
+            Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(output);
+            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            canvas.drawRoundRect(new RectF(0, 0, size, size), cornerRadius, cornerRadius, paint);
+            paint.setXfermode(new android.graphics.PorterDuffXfermode(
+                    android.graphics.PorterDuff.Mode.SRC_IN));
+            int x = (bitmap.getWidth() - size) / 2;
+            int y = (bitmap.getHeight() - size) / 2;
+            canvas.drawBitmap(bitmap, -x, -y, paint);
+            return new BitmapDrawable(context.getResources(), output);
+        }
+        return drawable;
     }
 
     // Drag-to-reposition touch listener — only active when taskbar is collapsed

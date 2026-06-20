@@ -233,6 +233,16 @@
             android:taskAffinity="com.farmerbb.taskbar.pinnedapps"
             android:configChanges="uiMode|screenSize"/>
         <activity
+            android:name=".activity.CropImageActivity"
+            android:theme="@style/Taskbar"
+            android:excludeFromRecents="true"
+            android:configChanges="uiMode|screenSize"/>
+        <activity
+            android:name=".activity.dark.CropImageActivityDark"
+            android:theme="@style/Taskbar.Dark"
+            android:excludeFromRecents="true"
+            android:configChanges="uiMode|screenSize"/>
+        <activity
             android:name=".activity.DummyActivity"
             android:documentLaunchMode="always"
             android:excludeFromRecents="true"

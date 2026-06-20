@@ -20,14 +20,10 @@ import android.content.Intent;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Process;
-import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -37,8 +33,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.IOException;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -193,7 +187,7 @@ public class PinnedAppsActivity extends AppCompatActivity {
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
             startActivityForResult(Intent.createChooser(intent,
-                    getString(R.string.tb_select_custom_icon)), 2);
+                    getString(R.string.tb_select_custom_icon)), 3); // REQUEST_PICK_IMAGE = 3
         });
 
         dialogView.findViewById(R.id.btn_reset_icon).setOnClickListener(v -> {
@@ -232,46 +226,29 @@ public class PinnedAppsActivity extends AppCompatActivity {
         PinnedBlockedApps.getInstance(this).forceSave(this);
     }
 
+    private static final int REQUEST_PICK_IMAGE = 3;
+    private static final int REQUEST_CROP_IMAGE = 4;
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == 2 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            try {
-                Bitmap source = MediaStore.Images.Media.getBitmap(getContentResolver(), data.getData());
-                Bitmap cropped = cropToSquare(source);
-                Bitmap rounded = applyRoundedCorners(cropped,
-                        getResources().getDimensionPixelSize(R.dimen.tb_icon_corner_radius));
-                BitmapDrawable drawable = new BitmapDrawable(getResources(), rounded);
+
+        if(requestCode == REQUEST_PICK_IMAGE && resultCode == RESULT_OK
+                && data != null && data.getData() != null) {
+            // Forward to crop activity
+            Intent cropIntent = new Intent(this, CropImageActivity.class);
+            cropIntent.setData(data.getData());
+            startActivityForResult(cropIntent, REQUEST_CROP_IMAGE);
+        }
+
+        if(requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK && data != null) {
+            Bitmap cropped = data.getParcelableExtra("cropped_bitmap");
+            if(cropped != null && currentEditingEntry != null) {
+                BitmapDrawable drawable = new BitmapDrawable(getResources(), cropped);
                 currentEditingEntry.setCustomIconFromDrawable(drawable);
-                source.recycle();
-                cropped.recycle();
                 Toast.makeText(this, "Icon updated", Toast.LENGTH_SHORT).show();
-            } catch (IOException e) {
-                Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
             }
         }
-    }
-
-    private static Bitmap cropToSquare(Bitmap source) {
-        int width = source.getWidth();
-        int height = source.getHeight();
-        int size = Math.min(width, height);
-        int x = (width - size) / 2;
-        int y = (height - size) / 2;
-        return Bitmap.createBitmap(source, x, y, size, size);
-    }
-
-    private static Bitmap applyRoundedCorners(Bitmap source, int cornerRadius) {
-        int size = source.getWidth();
-        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(output);
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        canvas.drawRoundRect(new android.graphics.RectF(0, 0, size, size),
-                cornerRadius, cornerRadius, paint);
-        paint.setXfermode(new android.graphics.PorterDuffXfermode(
-                android.graphics.PorterDuff.Mode.SRC_IN));
-        canvas.drawBitmap(source, 0, 0, paint);
-        return output;
     }
 
     private void reloadPinnedApps() {
