@@ -500,6 +500,7 @@
     <string name="tb_shizuku_successful">Successfully enabled additional settings via Shizuku</string>
 
     <string name="tb_customize_icon">自定义图标</string>
+    <string name="tb_search_apps_hint">搜索应用…</string>
     <string name="tb_select_custom_icon">选择图标</string>
     <string name="tb_reset_to_default">恢复默认</string>
 </resources>

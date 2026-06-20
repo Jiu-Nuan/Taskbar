@@ -26,10 +26,15 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -109,13 +114,11 @@ public class PinnedAppsActivity extends AppCompatActivity {
     }
 
     private void showAddAppDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.tb_action_add_pinned_app);
-
+        // Load all non-pinned apps
         LauncherApps launcherApps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
         List<LauncherActivityInfo> allApps = launcherApps.getActivityList(null, Process.myUserHandle());
 
-        List<LauncherActivityInfo> availableApps = new ArrayList<>();
+        final List<LauncherActivityInfo> availableApps = new ArrayList<>();
         for(LauncherActivityInfo info : allApps) {
             String componentName = info.getComponentName().flattenToString();
             if(!PinnedBlockedApps.getInstance(this).isPinned(componentName)) {
@@ -126,28 +129,55 @@ public class PinnedAppsActivity extends AppCompatActivity {
         Collections.sort(availableApps, (a, b) ->
                 Collator.getInstance().compare(a.getLabel().toString(), b.getLabel().toString()));
 
+        // Build app labels and filtered list
         String[] appLabels = new String[availableApps.size()];
         for(int i = 0; i < availableApps.size(); i++) {
             appLabels[i] = availableApps.get(i).getLabel().toString();
         }
 
-        builder.setItems(appLabels, (dialog, which) -> {
-            LauncherActivityInfo selected = availableApps.get(which);
-            String componentName = selected.getComponentName().flattenToString();
-            String label = selected.getLabel().toString();
-            String packageName = selected.getComponentName().getPackageName();
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.tb_add_app_dialog, null);
+        EditText searchInput = dialogView.findViewById(R.id.search_input);
+        ListView listView = dialogView.findViewById(R.id.app_list);
 
-            Drawable icon = IconCache.getInstance(PinnedAppsActivity.this)
-                    .getIcon(PinnedAppsActivity.this, getPackageManager(), selected);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1, appLabels);
+        listView.setAdapter(adapter);
+        listView.setTextFilterEnabled(true);
 
-            AppEntry entry = new AppEntry(packageName, componentName, label, icon, true);
-            PinnedBlockedApps.getInstance(PinnedAppsActivity.this).addPinnedApp(PinnedAppsActivity.this, entry);
-            reloadPinnedApps();
-            U.restartTaskbar(PinnedAppsActivity.this);
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                adapter.getFilter().filter(s.toString());
+            }
         });
 
-        builder.setNegativeButton(R.string.tb_action_cancel, null);
-        builder.show();
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            String label = adapter.getItem(position);
+            for(LauncherActivityInfo info : availableApps) {
+                if(info.getLabel().toString().equals(label)) {
+                    String componentName = info.getComponentName().flattenToString();
+                    String packageName = info.getComponentName().getPackageName();
+
+                    Drawable icon = IconCache.getInstance(PinnedAppsActivity.this)
+                            .getIcon(PinnedAppsActivity.this, getPackageManager(), info);
+
+                    AppEntry entry = new AppEntry(packageName, componentName, label, icon, true);
+                    PinnedBlockedApps.getInstance(PinnedAppsActivity.this)
+                            .addPinnedApp(PinnedAppsActivity.this, entry);
+                    reloadPinnedApps();
+                    U.restartTaskbar(PinnedAppsActivity.this);
+                    break;
+                }
+            }
+        });
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.tb_action_add_pinned_app)
+                .setView(dialogView)
+                .setNegativeButton(R.string.tb_action_cancel, null)
+                .show();
     }
 
     private void showCustomizeDialog(AppEntry entry) {
