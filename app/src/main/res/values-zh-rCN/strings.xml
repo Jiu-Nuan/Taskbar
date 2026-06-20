@@ -503,4 +503,7 @@
     <string name="tb_search_apps_hint">搜索应用…</string>
     <string name="tb_select_custom_icon">选择图标</string>
     <string name="tb_reset_to_default">恢复默认</string>
+    <string name="tb_reset_taskbar_offset">重置任务栏偏移</string>
+    <string name="tb_pref_title_pinned_apps">管理置顶应用</string>
+    <string name="tb_pinned_apps_count">已置顶 %d 个应用</string>
 </resources>
