@@ -500,8 +500,6 @@
     <string name="tb_shizuku_successful">Successfully enabled additional settings via Shizuku</string>
 
     <string name="tb_customize_icon">自定义图标</string>
-    <string name="tb_customize_text">显示文字（最多2个字符）</string>
-    <string name="tb_custom_text_hint">输入文字…</string>
     <string name="tb_select_custom_icon">选择图标</string>
     <string name="tb_reset_to_default">恢复默认</string>
 </resources>

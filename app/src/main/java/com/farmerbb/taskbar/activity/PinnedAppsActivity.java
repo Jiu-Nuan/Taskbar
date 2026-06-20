@@ -29,7 +29,6 @@ import android.os.Process;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -156,7 +155,6 @@ public class PinnedAppsActivity extends AppCompatActivity {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.tb_pinned_app_customize_dialog, null);
 
         ImageView iconPreview = dialogView.findViewById(R.id.custom_icon_preview);
-        EditText customTextInput = dialogView.findViewById(R.id.custom_text_input);
 
         if(entry.hasCustomIcon()) {
             iconPreview.setImageDrawable(entry.getCustomIcon(this));
@@ -164,16 +162,12 @@ public class PinnedAppsActivity extends AppCompatActivity {
             iconPreview.setImageDrawable(entry.getIcon(this));
         }
 
-        if(entry.hasCustomText()) {
-            customTextInput.setText(entry.getCustomText());
-        }
-
         dialogView.findViewById(R.id.btn_select_icon).setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
             startActivityForResult(Intent.createChooser(intent,
-                    getString(R.string.tb_select_custom_icon)), 3); // REQUEST_PICK_IMAGE = 3
+                    getString(R.string.tb_select_custom_icon)), REQUEST_PICK_IMAGE);
         });
 
         dialogView.findViewById(R.id.btn_reset_icon).setOnClickListener(v -> {
@@ -185,13 +179,6 @@ public class PinnedAppsActivity extends AppCompatActivity {
                 .setTitle(entry.getLabel())
                 .setView(dialogView)
                 .setPositiveButton(R.string.tb_action_ok, (dialog, which) -> {
-                    String customText = customTextInput.getText().toString().trim();
-                    if(customText.isEmpty()) {
-                        currentEditingEntry.setCustomText(null);
-                    } else {
-                        if(customText.length() > 2) customText = customText.substring(0, 2);
-                        currentEditingEntry.setCustomText(customText);
-                    }
                     syncEntryCustomization();
                     reloadPinnedApps();
                     U.restartTaskbar(this);
@@ -204,7 +191,6 @@ public class PinnedAppsActivity extends AppCompatActivity {
         List<AppEntry> current = PinnedBlockedApps.getInstance(this).getPinnedApps();
         for(AppEntry e : current) {
             if(e.getComponentName().equals(currentEditingEntry.getComponentName())) {
-                e.setCustomText(currentEditingEntry.getCustomText());
                 e.setCustomIconByteArray(currentEditingEntry.getCustomIconByteArray());
                 break;
             }

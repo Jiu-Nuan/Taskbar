@@ -509,8 +509,6 @@
     <string name="tb_shizuku_successful">Successfully enabled additional settings via Shizuku</string>
 
     <string name="tb_customize_icon">Customize icon</string>
-    <string name="tb_customize_text">Display text (max 2 chars)</string>
-    <string name="tb_custom_text_hint">Enter text...</string>
     <string name="tb_select_custom_icon">Choose icon</string>
     <string name="tb_reset_to_default">Reset to default</string>
 
