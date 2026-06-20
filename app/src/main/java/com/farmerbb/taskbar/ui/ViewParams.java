@@ -65,8 +65,8 @@ public class ViewParams {
         if(offsetX != 0)
             wmParams.x = offsetX;
 
-        if(offsetY != 0 && bottomMargin > -1)
-            wmParams.y = bottomMargin + offsetY;
+        if(offsetY != 0)
+            wmParams.y = (bottomMargin > -1 ? bottomMargin : 0) + offsetY;
 
         U.allowReflection();
         try {

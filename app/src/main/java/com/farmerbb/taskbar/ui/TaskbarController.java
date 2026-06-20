@@ -1998,23 +1998,31 @@ public class TaskbarController extends UIController {
                     SharedPreferences pref = U.getSharedPreferences(context);
                     if(!pref.getBoolean(PREF_COLLAPSED, false)) return false;
 
-                    if(isTouchOnEmptyArea(v, event)) {
-                        dragStartX = event.getRawX();
-                        dragStartY = event.getRawY();
-                        initialOffsetX = UIController.getOffsetX(context);
-                        initialOffsetY = UIController.getOffsetY(context);
+                    // Start long-press timer regardless of touch position;
+                    // short clicks still reach child views (button) since we return false
+                    dragStartX = event.getRawX();
+                    dragStartY = event.getRawY();
+                    initialOffsetX = UIController.getOffsetX(context);
+                    initialOffsetY = UIController.getOffsetY(context);
 
-                        longPressTriggered = false;
-                        longPressRunnable = () -> {
-                            longPressTriggered = true;
-                            enterDragMode(v);
-                        };
-                        dragHandler.postDelayed(longPressRunnable, LONG_PRESS_TIMEOUT);
-                        return true;
-                    }
-                    break;
+                    longPressTriggered = false;
+                    longPressRunnable = () -> {
+                        longPressTriggered = true;
+                        enterDragMode(v);
+                    };
+                    dragHandler.postDelayed(longPressRunnable, LONG_PRESS_TIMEOUT);
+                    return false;
 
                 case MotionEvent.ACTION_MOVE:
+                    // Cancel long-press if finger moves significantly before trigger
+                    if(!longPressTriggered) {
+                        float moved = Math.abs(event.getRawX() - dragStartX)
+                                + Math.abs(event.getRawY() - dragStartY);
+                        if(moved > 20f) {
+                            dragHandler.removeCallbacks(longPressRunnable);
+                        }
+                        return false;
+                    }
                     if(longPressTriggered && isDragging) {
                         float deltaX = event.getRawX() - dragStartX;
                         float deltaY = event.getRawY() - dragStartY;
