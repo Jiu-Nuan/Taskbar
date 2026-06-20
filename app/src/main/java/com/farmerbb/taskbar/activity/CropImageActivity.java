@@ -18,19 +18,21 @@ package com.farmerbb.taskbar.activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.farmerbb.taskbar.R;
 import com.farmerbb.taskbar.widget.CropOverlayView;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 
 public class CropImageActivity extends AppCompatActivity {
@@ -79,8 +81,18 @@ public class CropImageActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_crop).setOnClickListener(v -> {
             RectF cropRect = cropOverlay.getCropRect();
-            imageView.setDrawingCacheEnabled(true);
-            Bitmap full = imageView.getDrawingCache();
+
+            // Load original bitmap for cropping
+            Bitmap full = null;
+            try {
+                InputStream is = getContentResolver().openInputStream(imageUri);
+                full = BitmapFactory.decodeStream(is);
+                is.close();
+            } catch (Exception e) {
+                Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             if(full == null) {
                 setResult(RESULT_CANCELED);
                 finish();
@@ -112,10 +124,23 @@ public class CropImageActivity extends AppCompatActivity {
             int cropH = cropW; // force square
 
             Bitmap cropped = Bitmap.createBitmap(full, cropX, cropY, cropW, cropH);
+            full.recycle();
 
-            Intent result = new Intent();
-            result.putExtra("cropped_bitmap", cropped);
-            setResult(RESULT_OK, result);
+            // Save to cache file, return URI to avoid TransactionTooLargeException
+            try {
+                File outFile = new File(getCacheDir(), "cropped_icon.png");
+                FileOutputStream fos = new FileOutputStream(outFile);
+                cropped.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                fos.close();
+                cropped.recycle();
+
+                Intent result = new Intent();
+                result.setData(Uri.fromFile(outFile));
+                setResult(RESULT_OK, result);
+            } catch (Exception e) {
+                Toast.makeText(this, "Failed to save image", Toast.LENGTH_SHORT).show();
+                setResult(RESULT_CANCELED);
+            }
             finish();
         });
     }

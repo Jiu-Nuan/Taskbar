@@ -20,18 +20,17 @@ import android.content.Intent;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -158,7 +157,6 @@ public class PinnedAppsActivity extends AppCompatActivity {
 
         ImageView iconPreview = dialogView.findViewById(R.id.custom_icon_preview);
         EditText customTextInput = dialogView.findViewById(R.id.custom_text_input);
-        TextView previewLabel = dialogView.findViewById(R.id.custom_text_preview_label);
 
         if(entry.hasCustomIcon()) {
             iconPreview.setImageDrawable(entry.getCustomIcon(this));
@@ -168,19 +166,7 @@ public class PinnedAppsActivity extends AppCompatActivity {
 
         if(entry.hasCustomText()) {
             customTextInput.setText(entry.getCustomText());
-            previewLabel.setText(entry.getCustomText());
         }
-
-        // Live preview of custom text
-        customTextInput.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override
-            public void afterTextChanged(Editable s) {
-                String text = s.toString().trim();
-                previewLabel.setText(text.isEmpty() ? "" : text.substring(0, Math.min(text.length(), 2)));
-            }
-        });
 
         dialogView.findViewById(R.id.btn_select_icon).setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -242,11 +228,19 @@ public class PinnedAppsActivity extends AppCompatActivity {
         }
 
         if(requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK && data != null) {
-            Bitmap cropped = data.getParcelableExtra("cropped_bitmap");
-            if(cropped != null && currentEditingEntry != null) {
-                BitmapDrawable drawable = new BitmapDrawable(getResources(), cropped);
-                currentEditingEntry.setCustomIconFromDrawable(drawable);
-                Toast.makeText(this, "Icon updated", Toast.LENGTH_SHORT).show();
+            Uri croppedUri = data.getData();
+            if(croppedUri != null && currentEditingEntry != null) {
+                try {
+                    Bitmap cropped = BitmapFactory.decodeFile(croppedUri.getPath());
+                    if(cropped != null) {
+                        BitmapDrawable drawable = new BitmapDrawable(getResources(), cropped);
+                        currentEditingEntry.setCustomIconFromDrawable(drawable);
+                        // Clean up temp file
+                        new java.io.File(croppedUri.getPath()).delete();
+                    }
+                } catch (Exception e) {
+                    // ignore
+                }
             }
         }
     }

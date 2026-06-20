@@ -67,7 +67,6 @@ import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.text.format.DateFormat;
-import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -1637,9 +1636,6 @@ public class TaskbarController extends UIController {
         else
             isPinned = position < numOfPinnedApps;
 
-        // Reset custom text visibility
-        TextView customTextView = convertView.findViewById(R.id.custom_text);
-
         if(isPinned) {
             int alpha = pref.getInt(PREF_PINNED_APP_ALPHA, 100);
             float alphaFloat = alpha / 100f;
@@ -1650,19 +1646,8 @@ public class TaskbarController extends UIController {
                 imageView.setImageDrawable(getRoundedDrawable(icon, radius));
             }
             imageView.setImageAlpha((int)(alphaFloat * 255));
-
-            // Show custom text below icon
-            if(entry.hasCustomText()) {
-                customTextView.setText(entry.getCustomText());
-                customTextView.setAlpha(alphaFloat);
-                customTextView.setTextColor(U.getAccentColor(context));
-                customTextView.setVisibility(View.VISIBLE);
-            } else if(customTextView != null) {
-                customTextView.setVisibility(View.GONE);
-            }
         } else {
             imageView.setImageAlpha(255);
-            if(customTextView != null) customTextView.setVisibility(View.GONE);
         }
 
         imageView2.setBackgroundColor(U.getAccentColor(context));
