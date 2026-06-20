@@ -1381,7 +1381,9 @@ public class TaskbarController extends UIController {
         }
 
         if(startButton.getVisibility() == View.GONE) {
-            startButton.setVisibility(View.VISIBLE);
+            startButton.setVisibility(
+                    U.getSharedPreferences(context).getBoolean(PREF_HIDE_START_BUTTON, false)
+                    ? View.INVISIBLE : View.VISIBLE);
             space.setVisibility(View.VISIBLE);
 
             if(dashboardEnabled)
@@ -1414,7 +1416,8 @@ public class TaskbarController extends UIController {
             taskbarHiddenTemporarily = false;
         }
 
-        if(startButton.getVisibility() == View.VISIBLE) {
+        if(startButton.getVisibility() == View.VISIBLE
+                || startButton.getVisibility() == View.INVISIBLE) {
             startButton.setVisibility(View.GONE);
             space.setVisibility(View.GONE);
 
