@@ -2026,6 +2026,17 @@ public class TaskbarController extends UIController {
                     if(longPressTriggered && isDragging) {
                         float deltaX = event.getRawX() - dragStartX;
                         float deltaY = event.getRawY() - dragStartY;
+
+                        // Correct direction: WindowManager x/y offsets are relative to gravity edge.
+                        // For RIGHT gravity, +x moves window LEFT (away from right edge);
+                        // for BOTTOM gravity, +y moves window UP (away from bottom).
+                        // Invert delta for these edges so finger drag direction matches window movement.
+                        String position = TaskbarPosition.getTaskbarPosition(context);
+                        if(TaskbarPosition.isRight(position))
+                            deltaX = -deltaX;
+                        if(TaskbarPosition.isBottom(position))
+                            deltaY = -deltaY;
+
                         int newX = initialOffsetX + (int) deltaX;
                         int newY = initialOffsetY + (int) deltaY;
 
