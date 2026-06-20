@@ -196,7 +196,7 @@ public class TaskbarController extends UIController {
     private final BroadcastReceiver startMenuAppearReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(startButton.getVisibility() != View.VISIBLE
+            if(startButton.getVisibility() == View.GONE
                     && (!LauncherHelper.getInstance().isOnHomeScreen(context) || FreeformHackHelper.getInstance().isInFreeformWorkspace()))
                 layout.setVisibility(View.GONE);
         }
@@ -205,7 +205,7 @@ public class TaskbarController extends UIController {
     private final BroadcastReceiver startMenuDisappearReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(startButton.getVisibility() != View.VISIBLE)
+            if(startButton.getVisibility() == View.GONE)
                 layout.setVisibility(View.VISIBLE);
         }
     };
@@ -1368,7 +1368,7 @@ public class TaskbarController extends UIController {
             }
         }
 
-        if(startButton.getVisibility() != View.VISIBLE)
+        if(startButton.getVisibility() == View.GONE)
             showTaskbar(true);
         else
             hideTaskbar(true);
@@ -1380,9 +1380,8 @@ public class TaskbarController extends UIController {
             taskbarHiddenTemporarily = false;
         }
 
-        if(startButton.getVisibility() != View.VISIBLE) {
-            if(!U.getSharedPreferences(context).getBoolean(PREF_HIDE_START_BUTTON, false))
-                startButton.setVisibility(View.VISIBLE);
+        if(startButton.getVisibility() == View.GONE) {
+            startButton.setVisibility(View.VISIBLE);
             space.setVisibility(View.VISIBLE);
 
             if(dashboardEnabled)
@@ -1416,9 +1415,7 @@ public class TaskbarController extends UIController {
         }
 
         if(startButton.getVisibility() == View.VISIBLE) {
-            startButton.setVisibility(
-                    U.getSharedPreferences(context).getBoolean(PREF_HIDE_START_BUTTON, false)
-                    ? View.INVISIBLE : View.GONE);
+            startButton.setVisibility(View.GONE);
             space.setVisibility(View.GONE);
 
             if(dashboardEnabled)
