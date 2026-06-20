@@ -81,8 +81,8 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix ".debug"
-            manifestPlaceholders = [appName: "@string/tb_app_name_debug"]
+            applicationIdSuffix System.getenv("CI") == null ? ".debug" : ""
+            manifestPlaceholders = [appName: System.getenv("CI") == null ? "@string/tb_app_name_debug" : "@string/tb_app_name"]
         }
 
         release {
