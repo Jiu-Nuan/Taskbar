@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean hasCaption = false;
 
-    private final int latestChangelogVersion = 3;
+    private final int latestChangelogVersion = 4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

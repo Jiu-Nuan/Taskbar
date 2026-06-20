@@ -1,5 +1,21 @@
 <!-- Don't forget to bump the latestChangelogVersion inside MainActivity -->
 
+## Changelog for Taskbar 6.3
+
+This update brings several customization features and improvements:
+
+* Added option to hide the start button from the taskbar, preserving layout space
+
+* New pinned apps management page with drag-to-reorder, add, and remove capabilities
+
+* Custom icon support for pinned apps with built-in image cropping tool
+
+* Long-press drag to reposition the taskbar on screen (collapsed state)
+
+* Fuzzy search in the add-pinned-app dialog
+
+* Various bug fixes and stability improvements
+
 ## Changelog for Taskbar 6.2
 
 This is mostly a behind-the-scenes update, containing the following changes and fixes:
