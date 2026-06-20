@@ -38,6 +38,11 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -52,7 +57,6 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.os.Vibrator;
 import android.provider.Settings;
 import android.speech.RecognizerIntent;
 
@@ -134,14 +138,6 @@ public class TaskbarController extends UIController {
     private boolean taskbarHiddenTemporarily = false;
     private boolean isRefreshingRecents = false;
     private boolean isFirstStart = true;
-
-    // Drag offset fields
-    private boolean isDragging = false;
-    private float dragStartX, dragStartY;
-    private int initialOffsetX, initialOffsetY;
-    private Vibrator vibrator;
-    private View.OnTouchListener dragTouchListener;
-    private UIHost currentHost;
 
     private boolean startThread2 = false;
     private boolean stopThread2 = false;
@@ -237,6 +233,16 @@ public class TaskbarController extends UIController {
         }
     };
 
+    private SharedPreferences.OnSharedPreferenceChangeListener prefChangeListener;
+
+    // Drag offset fields
+    private boolean isDragging = false;
+    private float dragStartX, dragStartY;
+    private int initialOffsetX, initialOffsetY;
+    private android.os.Vibrator vibrator;
+    private View.OnTouchListener dragTouchListener;
+    private UIHost currentHost;
+
     public TaskbarController(Context context) {
         super(context);
     }
@@ -247,8 +253,9 @@ public class TaskbarController extends UIController {
     }
 
     private void drawTaskbar(UIHost host) {
-        currentHost = host;
         IconCache.getInstance(context).clearCache();
+
+        currentHost = host;
 
         // Initialize layout params
         WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
@@ -356,8 +363,8 @@ public class TaskbarController extends UIController {
 
         applyMarginFix(host, layout, params);
 
-        // Initialize drag support
-        vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        // Set up drag-to-reposition for collapsed taskbar
+        vibrator = (android.os.Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         dragTouchListener = new TaskbarDragTouchListener();
         layout.setOnTouchListener(dragTouchListener);
 
@@ -409,6 +416,13 @@ public class TaskbarController extends UIController {
         };
 
         startRefreshingRecents();
+
+        prefChangeListener = (sharedPreferences, key) -> {
+            if(PREF_HIDE_START_BUTTON.equals(key)) {
+                U.restartTaskbar(context);
+            }
+        };
+        pref.registerOnSharedPreferenceChangeListener(prefChangeListener);
 
         host.addView(layout, params);
 
@@ -466,6 +480,14 @@ public class TaskbarController extends UIController {
 
     @VisibleForTesting
     void drawStartButton(Context context, ImageView startButton, SharedPreferences pref) {
+        if(pref.getBoolean(PREF_HIDE_START_BUTTON, false)) {
+            startButton.setVisibility(View.INVISIBLE);
+            startButton.setOnClickListener(null);
+            startButton.setOnLongClickListener(null);
+            startButton.setOnGenericMotionListener(null);
+            return;
+        }
+
         Drawable allAppsIcon = ContextCompat.getDrawable(context, R.drawable.tb_all_apps_button_icon);
         int padding = 0;
 
@@ -1363,7 +1385,9 @@ public class TaskbarController extends UIController {
         }
 
         if(startButton.getVisibility() == View.GONE) {
-            startButton.setVisibility(View.VISIBLE);
+            startButton.setVisibility(
+                    U.getSharedPreferences(context).getBoolean(PREF_HIDE_START_BUTTON, false)
+                    ? View.INVISIBLE : View.VISIBLE);
             space.setVisibility(View.VISIBLE);
 
             if(dashboardEnabled)
@@ -1396,7 +1420,8 @@ public class TaskbarController extends UIController {
             taskbarHiddenTemporarily = false;
         }
 
-        if(startButton.getVisibility() == View.VISIBLE) {
+        if(startButton.getVisibility() == View.VISIBLE
+                || startButton.getVisibility() == View.INVISIBLE) {
             startButton.setVisibility(View.GONE);
             space.setVisibility(View.GONE);
 
@@ -1545,6 +1570,10 @@ public class TaskbarController extends UIController {
             U.unregisterReceiver(context, notificationCountReceiver);
         }
 
+        if(prefChangeListener != null) {
+            pref.unregisterOnSharedPreferenceChangeListener(prefChangeListener);
+        }
+
         isFirstStart = true;
     }
 
@@ -1598,6 +1627,29 @@ public class TaskbarController extends UIController {
         ImageView imageView = convertView.findViewById(R.id.icon);
         ImageView imageView2 = convertView.findViewById(R.id.shortcut_icon);
         imageView.setImageDrawable(entry.getIcon(context));
+
+        // Check for pinned app customization
+        boolean isPinned;
+        String tp = TaskbarPosition.getTaskbarPosition(context);
+        if(tp.contains("vertical"))
+            isPinned = position >= list.size() - numOfPinnedApps;
+        else
+            isPinned = position < numOfPinnedApps;
+
+        if(isPinned) {
+            int alpha = pref.getInt(PREF_PINNED_APP_ALPHA, 100);
+            float alphaFloat = alpha / 100f;
+
+            if(entry.hasCustomIcon()) {
+                Drawable icon = entry.getCustomIcon(context);
+                int radius = context.getResources().getDimensionPixelSize(R.dimen.tb_icon_corner_radius);
+                imageView.setImageDrawable(getRoundedDrawable(icon, radius));
+            }
+            imageView.setImageAlpha((int)(alphaFloat * 255));
+        } else {
+            imageView.setImageAlpha(255);
+        }
+
         imageView2.setBackgroundColor(U.getAccentColor(context));
 
         String taskbarPosition = TaskbarPosition.getTaskbarPosition(context);
@@ -1616,7 +1668,7 @@ public class TaskbarController extends UIController {
             imageView2.setRotationY(180);
         }
 
-        FrameLayout layout = convertView.findViewById(R.id.entry);
+        View layout = convertView.findViewById(R.id.entry);
         layout.setOnClickListener(view -> U.launchApp(
                 context,
                 entry,
@@ -1913,6 +1965,25 @@ public class TaskbarController extends UIController {
         return context.getResources().getIdentifier(name, "drawable", packageName);
     }
 
+    private Drawable getRoundedDrawable(Drawable drawable, int cornerRadius) {
+        if(drawable instanceof BitmapDrawable) {
+            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+            int size = Math.min(bitmap.getWidth(), bitmap.getHeight());
+            Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(output);
+            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            canvas.drawRoundRect(new RectF(0, 0, size, size), cornerRadius, cornerRadius, paint);
+            paint.setXfermode(new android.graphics.PorterDuffXfermode(
+                    android.graphics.PorterDuff.Mode.SRC_IN));
+            int x = (bitmap.getWidth() - size) / 2;
+            int y = (bitmap.getHeight() - size) / 2;
+            canvas.drawBitmap(bitmap, -x, -y, paint);
+            return new BitmapDrawable(context.getResources(), output);
+        }
+        return drawable;
+    }
+
+    // Drag-to-reposition touch listener — only active when taskbar is collapsed
     private class TaskbarDragTouchListener implements View.OnTouchListener {
         private static final int LONG_PRESS_TIMEOUT = 400;
         private final Handler dragHandler = new Handler();
@@ -1923,26 +1994,49 @@ public class TaskbarController extends UIController {
         public boolean onTouch(View v, MotionEvent event) {
             switch(event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    if(isTouchOnEmptyArea(v, event)) {
-                        dragStartX = event.getRawX();
-                        dragStartY = event.getRawY();
-                        initialOffsetX = UIController.getOffsetX(context);
-                        initialOffsetY = UIController.getOffsetY(context);
+                    // Only allow drag when taskbar is collapsed
+                    SharedPreferences pref = U.getSharedPreferences(context);
+                    if(!pref.getBoolean(PREF_COLLAPSED, false)) return false;
 
-                        longPressTriggered = false;
-                        longPressRunnable = () -> {
-                            longPressTriggered = true;
-                            enterDragMode(v);
-                        };
-                        dragHandler.postDelayed(longPressRunnable, LONG_PRESS_TIMEOUT);
-                        return true;
-                    }
-                    break;
+                    // Start long-press timer regardless of touch position;
+                    // short clicks still reach child views (button) since we return false
+                    dragStartX = event.getRawX();
+                    dragStartY = event.getRawY();
+                    initialOffsetX = UIController.getOffsetX(context);
+                    initialOffsetY = UIController.getOffsetY(context);
+
+                    longPressTriggered = false;
+                    longPressRunnable = () -> {
+                        longPressTriggered = true;
+                        enterDragMode(v);
+                    };
+                    dragHandler.postDelayed(longPressRunnable, LONG_PRESS_TIMEOUT);
+                    return false;
 
                 case MotionEvent.ACTION_MOVE:
+                    // Cancel long-press if finger moves significantly before trigger
+                    if(!longPressTriggered) {
+                        float moved = Math.abs(event.getRawX() - dragStartX)
+                                + Math.abs(event.getRawY() - dragStartY);
+                        if(moved > 20f) {
+                            dragHandler.removeCallbacks(longPressRunnable);
+                        }
+                        return false;
+                    }
                     if(longPressTriggered && isDragging) {
                         float deltaX = event.getRawX() - dragStartX;
                         float deltaY = event.getRawY() - dragStartY;
+
+                        // Correct direction: WindowManager x/y offsets are relative to gravity edge.
+                        // For RIGHT gravity, +x moves window LEFT (away from right edge);
+                        // for BOTTOM gravity, +y moves window UP (away from bottom).
+                        // Invert delta for these edges so finger drag direction matches window movement.
+                        String position = TaskbarPosition.getTaskbarPosition(context);
+                        if(TaskbarPosition.isRight(position))
+                            deltaX = -deltaX;
+                        if(TaskbarPosition.isBottom(position))
+                            deltaY = -deltaY;
+
                         int newX = initialOffsetX + (int) deltaX;
                         int newY = initialOffsetY + (int) deltaY;
 
@@ -1957,9 +2051,11 @@ public class TaskbarController extends UIController {
                                 newY
                         );
 
-                        try {
-                            if(currentHost != null) currentHost.updateViewLayout(layout, newParams);
-                        } catch (Exception ignored) {}
+                        if(currentHost != null) {
+                            try {
+                                currentHost.updateViewLayout(layout, newParams);
+                            } catch (Exception ignored) {}
+                        }
                         return true;
                     }
                     break;
@@ -1977,43 +2073,37 @@ public class TaskbarController extends UIController {
         }
 
         private boolean isTouchOnEmptyArea(View v, MotionEvent event) {
-            float x = event.getX();
-            float y = event.getY();
-            if(startButton.getVisibility() == View.VISIBLE && isPointInsideView(startButton, x, y)) return false;
+            float rawX = event.getRawX();
+            float rawY = event.getRawY();
+
+            // In collapsed state, only start button, dashboard, navbar, and hide button are visible
+            if(startButton.getVisibility() == View.VISIBLE && isPointInsideView(startButton, rawX, rawY))
+                return false;
             if(dashboardButton != null && dashboardButton.getVisibility() == View.VISIBLE
-                    && isPointInsideView(dashboardButton, x, y)) return false;
+                    && isPointInsideView(dashboardButton, rawX, rawY))
+                return false;
             if(navbarButtons != null && navbarButtons.getVisibility() == View.VISIBLE
-                    && isPointInsideView(navbarButtons, x, y)) return false;
-            if(button != null && isPointInsideView(button, x, y)) return false;
-            if(scrollView != null && scrollView.getVisibility() == View.VISIBLE
-                    && isTouchInsideScrollViewContent(scrollView, x, y)) return false;
+                    && isPointInsideView(navbarButtons, rawX, rawY))
+                return false;
+            if(button != null && isPointInsideView(button, rawX, rawY))
+                return false;
             return true;
         }
 
-        private boolean isTouchInsideScrollViewContent(View scrollView, float x, float y) {
-            if(!isPointInsideView(scrollView, x, y)) return false;
-            if(scrollView instanceof ViewGroup) {
-                ViewGroup vg = (ViewGroup) scrollView;
-                if(vg.getChildCount() > 0) {
-                    View content = vg.getChildAt(0);
-                    return isPointInsideView(content, x, y);
-                }
-            }
-            return true;
-        }
-
-        private boolean isPointInsideView(View view, float x, float y) {
-            int[] location = new int[2];
-            view.getLocationInWindow(location);
-            return x >= location[0] && x <= location[0] + view.getWidth()
-                    && y >= location[1] && y <= location[1] + view.getHeight();
+        private boolean isPointInsideView(View view, float rawX, float rawY) {
+            int[] screenLoc = new int[2];
+            view.getLocationOnScreen(screenLoc);
+            return rawX >= screenLoc[0] && rawX <= screenLoc[0] + view.getWidth()
+                    && rawY >= screenLoc[1] && rawY <= screenLoc[1] + view.getHeight();
         }
 
         private void enterDragMode(View v) {
             isDragging = true;
-            if(vibrator != null && vibrator.hasVibrator())
-                vibrator.vibrate(50);
-            // Visual feedback: apply highlight
+            if(vibrator != null && vibrator.hasVibrator()) {
+                try {
+                    vibrator.vibrate(50);
+                } catch (SecurityException ignored) {}
+            }
             v.setBackgroundColor(android.graphics.Color.argb(60, 0, 100, 255));
         }
 
@@ -2024,6 +2114,14 @@ public class TaskbarController extends UIController {
 
             float deltaX = event.getRawX() - dragStartX;
             float deltaY = event.getRawY() - dragStartY;
+
+            // Apply same direction correction as ACTION_MOVE for consistent saved offset
+            String position = TaskbarPosition.getTaskbarPosition(context);
+            if(TaskbarPosition.isRight(position))
+                deltaX = -deltaX;
+            if(TaskbarPosition.isBottom(position))
+                deltaY = -deltaY;
+
             float density = context.getResources().getDisplayMetrics().density;
             int offsetXDp = Math.round((initialOffsetX + deltaX) / density);
             int offsetYDp = Math.round((initialOffsetY + deltaY) / density);

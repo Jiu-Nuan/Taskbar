@@ -6,6 +6,7 @@ import com.farmerbb.taskbar.helper.LauncherHelper
 import com.farmerbb.taskbar.mockito.BooleanAnswer
 import com.farmerbb.taskbar.util.Constants
 import com.farmerbb.taskbar.util.U
+import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -91,6 +92,22 @@ class UIControllerTest {
                 .edit()
                 .putBoolean(Constants.PREF_TASKBAR_ACTIVE, active)
                 .apply()
+    }
+
+    @Test
+    fun `test getOffsetX and getOffsetY`() {
+        val pref = U.getSharedPreferences(context)
+        pref.edit()
+            .putInt(Constants.PREF_TASKBAR_OFFSET_X, 10)
+            .putInt(Constants.PREF_TASKBAR_OFFSET_Y, -5)
+            .apply()
+
+        val offsetX = UIController.getOffsetX(context)
+        val offsetY = UIController.getOffsetY(context)
+
+        val density = context.resources.displayMetrics.density
+        assertThat(offsetX).isEqualTo((10 * density).toInt())
+        assertThat(offsetY).isEqualTo((-5 * density).toInt())
     }
 
     private class TestRunnable : Runnable {

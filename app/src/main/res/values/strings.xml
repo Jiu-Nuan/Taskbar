@@ -127,6 +127,13 @@
     <string name="tb_unblock_app">Unblock from recents</string>
     <string name="tb_clear_pinned_apps">Reset per-app preferences</string>
 
+    <string name="tb_pref_title_pinned_apps">管理置顶应用</string>
+    <string name="tb_action_add_pinned_app">添加置顶应用</string>
+    <string name="tb_action_remove">移除</string>
+    <string name="tb_action_drag_to_reorder">拖拽排序</string>
+    <string name="tb_pinned_apps_count">已置顶 %d 个应用</string>
+    <string name="tb_reset_taskbar_offset">Reset taskbar offset</string>
+
     <string name="tb_pref_title_hide_foreground">Hide icon for foreground application</string>
     <string name="tb_pref_summary_hide_foreground">May reduce performance</string>
 
@@ -300,6 +307,9 @@
 
     <string name="tb_hide_taskbar_disclaimer">Does not apply to apps in freeform mode</string>
     <string name="tb_transparent_start_menu">Transparent start menu</string>
+    <string name="tb_pref_title_pinned_app_alpha">Pinned app transparency</string>
+    <string name="tb_pref_description_pinned_app_alpha">Opacity of pinned app icons (20 = most transparent, 100 = fully opaque)</string>
+    <string name="tb_pref_title_hide_start_button">Hide start button</string>
 
     <string name="tb_launch_games_fullscreen_title">Launch games fullscreen</string>
     <string name="tb_launch_games_fullscreen_message">If an application declares itself to be a game, disallow it from launching in freeform mode</string>
@@ -498,4 +508,10 @@
     <string name="tb_override_freeform_unsupported_description">This version of Android does not support freeform mode on displays that do not set their default windowing mode to freeform (such as the built-in device display).\n\nIf you believe this is in error, toggle this setting on to force-enable the \'Freeform mode\" settings page.</string>
 
     <string name="tb_shizuku_successful">Successfully enabled additional settings via Shizuku</string>
+
+    <string name="tb_customize_icon">Customize icon</string>
+    <string name="tb_search_apps_hint">Search apps…</string>
+    <string name="tb_select_custom_icon">Choose icon</string>
+    <string name="tb_reset_to_default">Reset to default</string>
+
 </resources>

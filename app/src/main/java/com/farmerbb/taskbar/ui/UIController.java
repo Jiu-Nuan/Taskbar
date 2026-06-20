@@ -18,6 +18,8 @@ package com.farmerbb.taskbar.ui;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.provider.Settings;
+
+import androidx.annotation.VisibleForTesting;
 import android.view.View;
 
 import com.farmerbb.taskbar.BuildConfig;
@@ -70,6 +72,20 @@ public abstract class UIController {
                 && !U.isChromeOs(context)
                 && !U.isShowHideNavbarSupported()
                 && TaskbarPosition.isBottom(context) ? U.getNavbarHeight(context) : -1;
+    }
+
+    @VisibleForTesting
+    static int getOffsetX(Context context) {
+        SharedPreferences pref = U.getSharedPreferences(context);
+        int offsetDp = pref.getInt(PREF_TASKBAR_OFFSET_X, 0);
+        return (int) (offsetDp * context.getResources().getDisplayMetrics().density);
+    }
+
+    @VisibleForTesting
+    static int getOffsetY(Context context) {
+        SharedPreferences pref = U.getSharedPreferences(context);
+        int offsetDp = pref.getInt(PREF_TASKBAR_OFFSET_Y, 0);
+        return (int) (offsetDp * context.getResources().getDisplayMetrics().density);
     }
 
     protected void applyMarginFix(UIHost host, View layout, ViewParams params) {

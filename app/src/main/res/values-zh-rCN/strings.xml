@@ -128,6 +128,7 @@
     <string name="tb_clear_pinned_apps">重置各个应用的首选项</string>
 
     <string name="tb_pref_title_hide_foreground">隐藏前台应用程序的图标</string>
+    <string name="tb_pref_title_hide_start_button">隐藏开始按钮</string>
     <string name="tb_pref_summary_hide_foreground">可能降低性能</string>
 
     <string name="tb_pref_title_theme">主题</string>
@@ -497,4 +498,12 @@
     <string name="tb_override_freeform_unsupported_description">This version of Android does not support freeform mode on displays that do not set their default windowing mode to freeform (such as the built-in device display).\n\nIf you believe this is in error, toggle this setting on to force-enable the \'Freeform mode\" settings page.</string>
 
     <string name="tb_shizuku_successful">Successfully enabled additional settings via Shizuku</string>
+
+    <string name="tb_customize_icon">自定义图标</string>
+    <string name="tb_search_apps_hint">搜索应用…</string>
+    <string name="tb_select_custom_icon">选择图标</string>
+    <string name="tb_reset_to_default">恢复默认</string>
+    <string name="tb_reset_taskbar_offset">重置任务栏偏移</string>
+    <string name="tb_pref_title_pinned_apps">管理置顶应用</string>
+    <string name="tb_pinned_apps_count">已置顶 %d 个应用</string>
 </resources>

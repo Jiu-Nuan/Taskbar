@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Crop image layout -->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FF000000">
+
+    <ImageView
+        android:id="@+id/crop_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter" />
+
+    <!-- Semi-transparent overlay with a transparent square hole -->
+    <com.farmerbb.taskbar.widget.CropOverlayView
+        android:id="@+id/crop_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:padding="8dp"
+        android:layout_gravity="top">
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tb_action_cancel"
+            style="?android:attr/buttonBarButtonStyle" />
+
+        <Button
+            android:id="@+id/btn_crop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tb_action_ok"
+            style="?android:attr/buttonBarButtonStyle" />
+
+    </LinearLayout>
+
+</FrameLayout>

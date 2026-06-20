@@ -142,6 +142,7 @@ public class Constants {
     public static final String PREF_HIDE_DONATE = "hide_donate";
     public static final String PREF_HIDE_FOREGROUND = "hide_foreground";
     public static final String PREF_HIDE_ICON_LABELS = "hide_icon_labels";
+    public static final String PREF_HIDE_START_BUTTON = "hide_start_button";
     public static final String PREF_HIDE_TASKBAR = "hide_taskbar";
     public static final String PREF_HIDE_WHEN_KEYBOARD_SHOWN = "hide_when_keyboard_shown";
     public static final String PREF_HSL_ID = "hsl_id";
@@ -164,6 +165,9 @@ public class Constants {
     public static final String PREF_OPEN_TASKBAR_SETTINGS = "open_taskbar_settings";
     public static final String PREF_OVERRIDE_FREEFORM_UNSUPPORTED = "override_freeform_unsupported";
     public static final String PREF_PIN_APP = "pin_app";
+    public static final String PREF_PINNED_APP_ALPHA = "pinned_app_alpha";
+    public static final String PREF_PINNED_APP_ALPHA_PREF = "pinned_app_alpha_pref";
+    public static final String PREF_PINNED_APPS = "pinned_apps";
     public static final String PREF_POSITION = "position";
     public static final String PREF_POWER_BUTTON_WARNING = "power_button_warning";
     public static final String PREF_POWER_MENU = "power_menu";

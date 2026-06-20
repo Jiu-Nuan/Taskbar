@@ -35,8 +35,8 @@ public class ViewParams {
         this(width, height, gravity, flags, bottomMargin, 0, 0);
     }
 
-    public ViewParams(int width, int height, int gravity, int flags, int bottomMargin,
-                      int offsetX, int offsetY) {
+    public ViewParams(int width, int height, int gravity, int flags,
+                       int bottomMargin, int offsetX, int offsetY) {
         this.width = width;
         this.height = height;
         this.gravity = gravity;
@@ -61,8 +61,12 @@ public class ViewParams {
         if(bottomMargin > -1)
             wmParams.y = bottomMargin;
 
-        wmParams.x = offsetX;
-        wmParams.y = wmParams.y + offsetY;
+        // Apply offset — only when bottomMargin is valid to avoid overwriting sentinel -1
+        if(offsetX != 0)
+            wmParams.x = offsetX;
+
+        if(offsetY != 0)
+            wmParams.y = (bottomMargin > -1 ? bottomMargin : 0) + offsetY;
 
         U.allowReflection();
         try {
@@ -90,6 +94,10 @@ public class ViewParams {
     }
 
     public ViewParams updateBottomMargin(int bottomMargin) {
+        return new ViewParams(width, height, gravity, flags, bottomMargin, offsetX, offsetY);
+    }
+
+    public ViewParams updateOffset(int offsetX, int offsetY) {
         return new ViewParams(width, height, gravity, flags, bottomMargin, offsetX, offsetY);
     }
 }

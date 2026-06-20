@@ -16,6 +16,7 @@
 
 <resources>
     <dimen name="tb_icon_size">60dp</dimen>
+    <dimen name="tb_icon_corner_radius">8dp</dimen>
     <dimen name="tb_start_menu_width">180dp</dimen>
     <dimen name="tb_start_menu_height">240dp</dimen>
     <dimen name="tb_start_menu_height_half">120dp</dimen>

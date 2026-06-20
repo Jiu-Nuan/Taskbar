@@ -47,6 +47,10 @@
         android:key="blacklist"
         android:title="@string/tb_pref_title_blacklist" />
 
+    <Preference
+        android:key="pinned_apps"
+        android:title="@string/tb_pref_title_pinned_apps" />
+
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="scrollbar"

@@ -1,0 +1,292 @@
+/* Copyright 2016 Braden Farmer
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.farmerbb.taskbar.activity;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.LauncherActivityInfo;
+import android.content.pm.LauncherApps;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Process;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.farmerbb.taskbar.R;
+import com.farmerbb.taskbar.adapter.PinnedAppsAdapter;
+import com.farmerbb.taskbar.util.AppEntry;
+import com.farmerbb.taskbar.util.IconCache;
+import com.farmerbb.taskbar.util.PinnedBlockedApps;
+import com.farmerbb.taskbar.util.U;
+
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class PinnedAppsActivity extends AppCompatActivity {
+
+    private PinnedBlockedApps pba;
+    private List<AppEntry> pinnedApps;
+    private PinnedAppsAdapter adapter;
+    private AppEntry currentEditingEntry;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.tb_pinned_apps);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if(getSupportActionBar() != null)
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        pba = PinnedBlockedApps.getInstance(this);
+        pinnedApps = new ArrayList<>(pba.getPinnedApps());
+
+        RecyclerView recyclerView = findViewById(R.id.recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        adapter = new PinnedAppsAdapter(this, pinnedApps, this::showCustomizeDialog);
+        recyclerView.setAdapter(adapter);
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0) {
+            @Override
+            public boolean onMove(RecyclerView rv, RecyclerView.ViewHolder source,
+                                  RecyclerView.ViewHolder target) {
+                int fromPos = source.getAdapterPosition();
+                int toPos = target.getAdapterPosition();
+                adapter.onItemMove(fromPos, toPos);
+                return true;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {}
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return false;
+            }
+        });
+        itemTouchHelper.attachToRecyclerView(recyclerView);
+
+        adapter.setDragStartListener(itemTouchHelper::startDrag);
+
+        adapter.setOnDeleteListener(entry -> {
+            PinnedBlockedApps.getInstance(this).removePinnedApp(this, entry.getComponentName());
+            PinnedBlockedApps.getInstance(this).forceSave(this);
+        });
+
+        findViewById(R.id.fab_add).setOnClickListener(v -> showAddAppDialog());
+    }
+
+    private void showAddAppDialog() {
+        // Load all non-pinned apps
+        LauncherApps launcherApps = (LauncherApps) getSystemService(Context.LAUNCHER_APPS_SERVICE);
+        List<LauncherActivityInfo> allApps = launcherApps.getActivityList(null, Process.myUserHandle());
+
+        final List<LauncherActivityInfo> availableApps = new ArrayList<>();
+        for(LauncherActivityInfo info : allApps) {
+            String componentName = info.getComponentName().flattenToString();
+            if(!PinnedBlockedApps.getInstance(this).isPinned(componentName)) {
+                availableApps.add(info);
+            }
+        }
+
+        Collections.sort(availableApps, (a, b) ->
+                Collator.getInstance().compare(a.getLabel().toString(), b.getLabel().toString()));
+
+        // Build app labels and filtered list
+        String[] appLabels = new String[availableApps.size()];
+        for(int i = 0; i < availableApps.size(); i++) {
+            appLabels[i] = availableApps.get(i).getLabel().toString();
+        }
+
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.tb_add_app_dialog, null);
+        EditText searchInput = dialogView.findViewById(R.id.search_input);
+        ListView listView = dialogView.findViewById(R.id.app_list);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1, appLabels);
+        listView.setAdapter(adapter);
+        listView.setTextFilterEnabled(true);
+
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                adapter.getFilter().filter(s.toString());
+            }
+        });
+
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            String label = adapter.getItem(position);
+            for(LauncherActivityInfo info : availableApps) {
+                if(info.getLabel().toString().equals(label)) {
+                    String componentName = info.getComponentName().flattenToString();
+                    String packageName = info.getComponentName().getPackageName();
+
+                    Drawable icon = IconCache.getInstance(PinnedAppsActivity.this)
+                            .getIcon(PinnedAppsActivity.this, getPackageManager(), info);
+
+                    AppEntry entry = new AppEntry(packageName, componentName, label, icon, true);
+                    PinnedBlockedApps.getInstance(PinnedAppsActivity.this)
+                            .addPinnedApp(PinnedAppsActivity.this, entry);
+                    reloadPinnedApps();
+                    U.restartTaskbar(PinnedAppsActivity.this);
+                    break;
+                }
+            }
+        });
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.tb_action_add_pinned_app)
+                .setView(dialogView)
+                .setNegativeButton(R.string.tb_action_cancel, null)
+                .show();
+    }
+
+    private void showCustomizeDialog(AppEntry entry) {
+        currentEditingEntry = entry;
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.tb_pinned_app_customize_dialog, null);
+
+        ImageView iconPreview = dialogView.findViewById(R.id.custom_icon_preview);
+
+        if(entry.hasCustomIcon()) {
+            iconPreview.setImageDrawable(entry.getCustomIcon(this));
+        } else {
+            iconPreview.setImageDrawable(entry.getIcon(this));
+        }
+
+        dialogView.findViewById(R.id.btn_select_icon).setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("image/*");
+            startActivityForResult(Intent.createChooser(intent,
+                    getString(R.string.tb_select_custom_icon)), REQUEST_PICK_IMAGE);
+        });
+
+        dialogView.findViewById(R.id.btn_reset_icon).setOnClickListener(v -> {
+            currentEditingEntry.setCustomIconByteArray(null);
+            iconPreview.setImageDrawable(currentEditingEntry.getIcon(this));
+        });
+
+        new AlertDialog.Builder(this)
+                .setTitle(entry.getLabel())
+                .setView(dialogView)
+                .setPositiveButton(R.string.tb_action_ok, (dialog, which) -> {
+                    syncEntryCustomization();
+                    reloadPinnedApps();
+                    U.restartTaskbar(this);
+                })
+                .setNegativeButton(R.string.tb_action_cancel, null)
+                .show();
+    }
+
+    private void syncEntryCustomization() {
+        List<AppEntry> current = PinnedBlockedApps.getInstance(this).getPinnedApps();
+        for(AppEntry e : current) {
+            if(e.getComponentName().equals(currentEditingEntry.getComponentName())) {
+                e.setCustomIconByteArray(currentEditingEntry.getCustomIconByteArray());
+                break;
+            }
+        }
+        PinnedBlockedApps.getInstance(this).forceSave(this);
+    }
+
+    private static final int REQUEST_PICK_IMAGE = 3;
+    private static final int REQUEST_CROP_IMAGE = 4;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == REQUEST_PICK_IMAGE && resultCode == RESULT_OK
+                && data != null && data.getData() != null) {
+            // Forward to crop activity
+            Intent cropIntent = new Intent(this, CropImageActivity.class);
+            cropIntent.setData(data.getData());
+            startActivityForResult(cropIntent, REQUEST_CROP_IMAGE);
+        }
+
+        if(requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK && data != null) {
+            Uri croppedUri = data.getData();
+            if(croppedUri != null && currentEditingEntry != null) {
+                try {
+                    Bitmap cropped = BitmapFactory.decodeFile(croppedUri.getPath());
+                    if(cropped != null) {
+                        BitmapDrawable drawable = new BitmapDrawable(getResources(), cropped);
+                        currentEditingEntry.setCustomIconFromDrawable(drawable);
+                        // Clean up temp file
+                        new java.io.File(croppedUri.getPath()).delete();
+                    }
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
+        }
+    }
+
+    private void reloadPinnedApps() {
+        pba = PinnedBlockedApps.getInstance(this);
+        pinnedApps.clear();
+        pinnedApps.addAll(pba.getPinnedApps());
+        adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Sync current order to persistent store
+        List<AppEntry> snapshot = new ArrayList<>(pinnedApps);
+        pba.getPinnedApps().clear();
+        for(AppEntry e : snapshot) {
+            pba.getPinnedApps().add(e);
+        }
+        pba.forceSave(this);
+        U.restartTaskbar(this);
+    }
+}

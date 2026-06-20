@@ -27,7 +27,9 @@ import android.preference.Preference;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -77,6 +79,10 @@ public class AppearanceFragment extends SettingsFragment {
         bindPreferenceSummaryToValue(findPreference(PREF_SHORTCUT_ICON));
         bindPreferenceSummaryToValue(findPreference(PREF_TRANSPARENT_START_MENU));
         bindPreferenceSummaryToValue(findPreference(PREF_HIDE_ICON_LABELS));
+        bindPreferenceSummaryToValue(findPreference(PREF_HIDE_START_BUTTON));
+        findPreference(PREF_PINNED_APP_ALPHA_PREF).setOnPreferenceClickListener(this);
+        bindPreferenceSummaryToValue(findPreference(PREF_PINNED_APP_ALPHA_PREF));
+        findPreference(PREF_PINNED_APP_ALPHA_PREF).setSummary(String.valueOf(pref.getInt(PREF_PINNED_APP_ALPHA, 100)));
 
         findPreference(PREF_BACKGROUND_TINT_PREF).setSummary("#" + String.format("%08x", U.getBackgroundTint(getActivity())).toUpperCase());
         findPreference(PREF_ACCENT_COLOR_PREF).setSummary("#" + String.format("%08x", U.getAccentColor(getActivity())).toUpperCase());
@@ -154,6 +160,9 @@ public class AppearanceFragment extends SettingsFragment {
                 break;
             case PREF_ACCENT_COLOR_PREF:
                 showColorPicker(ColorPickerType.ACCENT_COLOR);
+                break;
+            case PREF_PINNED_APP_ALPHA_PREF:
+                showPinnedAlphaPicker();
                 break;
         }
 
@@ -325,5 +334,46 @@ public class AppearanceFragment extends SettingsFragment {
 
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void showPinnedAlphaPicker() {
+        SharedPreferences pref = U.getSharedPreferences(getActivity());
+        int currentAlpha = pref.getInt(PREF_PINNED_APP_ALPHA, 100);
+
+        LinearLayout dialogLayout = new LinearLayout(getActivity());
+        dialogLayout.setOrientation(LinearLayout.VERTICAL);
+        dialogLayout.setPadding(48, 24, 48, 24);
+
+        final TextView alphaValue = new TextView(getActivity());
+        alphaValue.setText(String.valueOf(currentAlpha));
+        alphaValue.setTextSize(24);
+        alphaValue.setGravity(Gravity.CENTER);
+        dialogLayout.addView(alphaValue);
+
+        final SeekBar seekBar = new SeekBar(getActivity());
+        seekBar.setMax(80); // range 20-100 -> 80 steps
+        seekBar.setProgress(currentAlpha - 20);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                alphaValue.setText(String.valueOf(progress + 20));
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+        dialogLayout.addView(seekBar);
+
+        new AlertDialog.Builder(getActivity())
+                .setTitle(R.string.tb_pref_title_pinned_app_alpha)
+                .setView(dialogLayout)
+                .setPositiveButton(R.string.tb_action_ok, (dialog, which) -> {
+                    int newAlpha = seekBar.getProgress() + 20;
+                    pref.edit().putInt(PREF_PINNED_APP_ALPHA, newAlpha).apply();
+                    findPreference(PREF_PINNED_APP_ALPHA_PREF).setSummary(String.valueOf(newAlpha));
+                    U.restartTaskbar(getActivity());
+                })
+                .setNegativeButton(R.string.tb_action_cancel, null)
+                .show();
     }
 }

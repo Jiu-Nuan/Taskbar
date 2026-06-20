@@ -108,6 +108,10 @@ public class PinnedBlockedApps implements Serializable {
         save(context);
     }
 
+    public void forceSave(Context context) {
+        save(context);
+    }
+
     private boolean save(Context context) {
         try {
             FileOutputStream fileOutputStream = context.openFileOutput("PinnedBlockedApps", Context.MODE_PRIVATE);
