@@ -2114,6 +2114,14 @@ public class TaskbarController extends UIController {
 
             float deltaX = event.getRawX() - dragStartX;
             float deltaY = event.getRawY() - dragStartY;
+
+            // Apply same direction correction as ACTION_MOVE for consistent saved offset
+            String position = TaskbarPosition.getTaskbarPosition(context);
+            if(TaskbarPosition.isRight(position))
+                deltaX = -deltaX;
+            if(TaskbarPosition.isBottom(position))
+                deltaY = -deltaY;
+
             float density = context.getResources().getDisplayMetrics().density;
             int offsetXDp = Math.round((initialOffsetX + deltaX) / density);
             int offsetYDp = Math.round((initialOffsetY + deltaY) / density);
