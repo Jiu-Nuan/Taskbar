@@ -24,8 +24,11 @@ jobs:
       run: ./gradlew assembleFreeDebug
     - name: Spotless Check
       run: ./gradlew spotlessCheck
+    - name: Get version
+      id: version
+      run: echo "VERSION=$(grep VERSION_NAME dependencies.gradle | grep -o '"[0-9.]*"' | tr -d '"')" >> $GITHUB_OUTPUT
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: Taskbar-${{ github.sha }}
+        name: Taskbar-v${{ steps.version.outputs.VERSION }}
         path: app/build/outputs/apk/free/debug/*.apk
