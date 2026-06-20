@@ -117,18 +117,4 @@ public abstract class UIController {
         String ime = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.DEFAULT_INPUT_METHOD);
         return !ime.startsWith(BuildConfig.BASE_APPLICATION_ID) && !ime.startsWith("com.farmerbb.secondscreen");
     }
-
-    public static int getOffsetX(Context context) {
-        SharedPreferences pref = U.getSharedPreferences(context);
-        int offsetDp = pref.getInt(PREF_TASKBAR_OFFSET_X, 0);
-        float density = context.getResources().getDisplayMetrics().density;
-        return Math.round(offsetDp * density);
-    }
-
-    public static int getOffsetY(Context context) {
-        SharedPreferences pref = U.getSharedPreferences(context);
-        int offsetDp = pref.getInt(PREF_TASKBAR_OFFSET_Y, 0);
-        float density = context.getResources().getDisplayMetrics().density;
-        return Math.round(offsetDp * density);
-    }
 }
