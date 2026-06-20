@@ -8,3 +8,5 @@
 /captures
 /app/build
 output*.json
+.claude/worktrees/
+docs/superpowers/
