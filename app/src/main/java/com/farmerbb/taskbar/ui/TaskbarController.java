@@ -1683,7 +1683,7 @@ public class TaskbarController extends UIController {
             imageView2.setRotationY(180);
         }
 
-        FrameLayout layout = convertView.findViewById(R.id.entry);
+        View layout = convertView.findViewById(R.id.entry);
         layout.setOnClickListener(view -> U.launchApp(
                 context,
                 entry,
