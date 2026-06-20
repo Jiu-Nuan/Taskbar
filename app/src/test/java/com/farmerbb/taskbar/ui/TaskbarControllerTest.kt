@@ -47,10 +47,10 @@ import com.farmerbb.taskbar.util.Constants.PREF_BUTTON_HOME
 import com.farmerbb.taskbar.util.Constants.PREF_BUTTON_RECENTS
 import com.farmerbb.taskbar.util.Constants.PREF_DASHBOARD
 import com.farmerbb.taskbar.util.Constants.PREF_HIDE_FOREGROUND
+import com.farmerbb.taskbar.util.Constants.PREF_HIDE_START_BUTTON
 import com.farmerbb.taskbar.util.Constants.PREF_RECENTS_AMOUNT
 import com.farmerbb.taskbar.util.Constants.PREF_RECENTS_AMOUNT_APP_START
 import com.farmerbb.taskbar.util.Constants.PREF_RECENTS_AMOUNT_RUNNING_APPS_ONLY
-import com.farmerbb.taskbar.util.Constants.PREF_HIDE_START_BUTTON
 import com.farmerbb.taskbar.util.Constants.PREF_RECENTS_AMOUNT_SHOW_ALL
 import com.farmerbb.taskbar.util.Constants.PREF_START_BUTTON_IMAGE
 import com.farmerbb.taskbar.util.Constants.PREF_START_BUTTON_IMAGE_APP_LOGO
