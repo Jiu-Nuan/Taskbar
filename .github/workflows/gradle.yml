@@ -24,3 +24,8 @@ jobs:
       run: ./gradlew assembleFreeDebug
     - name: Spotless Check
       run: ./gradlew spotlessCheck
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: Taskbar-${{ github.sha }}
+        path: app/build/outputs/apk/free/debug/*.apk
