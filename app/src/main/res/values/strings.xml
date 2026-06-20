@@ -287,7 +287,6 @@
 
     <string name="tb_pref_title_accent_color">Accent color</string>
     <string name="tb_reset_colors">Reset colors to default</string>
-    <string name="tb_reset_taskbar_offset">Reset taskbar offset</string>
 
     <string name="tb_visual_feedback">Visual feedback when selecting icons</string>
 
