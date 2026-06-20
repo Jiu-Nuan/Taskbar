@@ -48,8 +48,18 @@ public class PinnedAppsAdapter extends RecyclerView.Adapter<PinnedAppsAdapter.Vi
         void onStartDrag(RecyclerView.ViewHolder viewHolder);
     }
 
+    public interface OnDeleteListener {
+        void onDelete(AppEntry entry);
+    }
+
+    private OnDeleteListener deleteListener;
+
     public void setDragStartListener(OnStartDragListener dragStartListener) {
         this.dragStartListener = dragStartListener;
+    }
+
+    public void setOnDeleteListener(OnDeleteListener listener) {
+        this.deleteListener = listener;
     }
 
     public PinnedAppsAdapter(Context context, List<AppEntry> entries, OnItemClickListener listener) {
@@ -76,8 +86,9 @@ public class PinnedAppsAdapter extends RecyclerView.Adapter<PinnedAppsAdapter.Vi
         holder.deleteButton.setOnClickListener(v -> {
             int pos = holder.getAdapterPosition();
             if(pos != RecyclerView.NO_POSITION) {
-                entries.remove(pos);
+                AppEntry removed = entries.remove(pos);
                 notifyItemRemoved(pos);
+                if(deleteListener != null) deleteListener.onDelete(removed);
             }
         });
 

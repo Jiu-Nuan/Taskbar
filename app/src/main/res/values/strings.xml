@@ -513,5 +513,6 @@
     <string name="tb_custom_text_hint">Enter text...</string>
     <string name="tb_select_custom_icon">Choose icon</string>
     <string name="tb_reset_to_default">Reset to default</string>
+    <string name="tb_custom_text_preview">Preview</string>
 
 </resources>

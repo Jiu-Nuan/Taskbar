@@ -20,16 +20,22 @@ import android.content.Intent;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Process;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -102,6 +108,11 @@ public class PinnedAppsActivity extends AppCompatActivity {
 
         adapter.setDragStartListener(itemTouchHelper::startDrag);
 
+        adapter.setOnDeleteListener(entry -> {
+            PinnedBlockedApps.getInstance(this).removePinnedApp(this, entry.getComponentName());
+            PinnedBlockedApps.getInstance(this).forceSave(this);
+        });
+
         findViewById(R.id.fab_add).setOnClickListener(v -> showAddAppDialog());
     }
 
@@ -153,6 +164,7 @@ public class PinnedAppsActivity extends AppCompatActivity {
 
         ImageView iconPreview = dialogView.findViewById(R.id.custom_icon_preview);
         EditText customTextInput = dialogView.findViewById(R.id.custom_text_input);
+        TextView previewLabel = dialogView.findViewById(R.id.custom_text_preview_label);
 
         if(entry.hasCustomIcon()) {
             iconPreview.setImageDrawable(entry.getCustomIcon(this));
@@ -162,7 +174,19 @@ public class PinnedAppsActivity extends AppCompatActivity {
 
         if(entry.hasCustomText()) {
             customTextInput.setText(entry.getCustomText());
+            previewLabel.setText(entry.getCustomText());
         }
+
+        // Live preview of custom text
+        customTextInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                String text = s.toString().trim();
+                previewLabel.setText(text.isEmpty() ? "" : text.substring(0, Math.min(text.length(), 2)));
+            }
+        });
 
         dialogView.findViewById(R.id.btn_select_icon).setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -205,6 +229,7 @@ public class PinnedAppsActivity extends AppCompatActivity {
                 break;
             }
         }
+        PinnedBlockedApps.getInstance(this).forceSave(this);
     }
 
     @Override
@@ -212,9 +237,14 @@ public class PinnedAppsActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == 2 && resultCode == RESULT_OK && data != null && data.getData() != null) {
             try {
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), data.getData());
-                BitmapDrawable drawable = new BitmapDrawable(getResources(), bitmap);
+                Bitmap source = MediaStore.Images.Media.getBitmap(getContentResolver(), data.getData());
+                Bitmap cropped = cropToSquare(source);
+                Bitmap rounded = applyRoundedCorners(cropped,
+                        getResources().getDimensionPixelSize(R.dimen.tb_icon_corner_radius));
+                BitmapDrawable drawable = new BitmapDrawable(getResources(), rounded);
                 currentEditingEntry.setCustomIconFromDrawable(drawable);
+                source.recycle();
+                cropped.recycle();
                 Toast.makeText(this, "Icon updated", Toast.LENGTH_SHORT).show();
             } catch (IOException e) {
                 Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
@@ -222,20 +252,33 @@ public class PinnedAppsActivity extends AppCompatActivity {
         }
     }
 
+    private static Bitmap cropToSquare(Bitmap source) {
+        int width = source.getWidth();
+        int height = source.getHeight();
+        int size = Math.min(width, height);
+        int x = (width - size) / 2;
+        int y = (height - size) / 2;
+        return Bitmap.createBitmap(source, x, y, size, size);
+    }
+
+    private static Bitmap applyRoundedCorners(Bitmap source, int cornerRadius) {
+        int size = source.getWidth();
+        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        canvas.drawRoundRect(new android.graphics.RectF(0, 0, size, size),
+                cornerRadius, cornerRadius, paint);
+        paint.setXfermode(new android.graphics.PorterDuffXfermode(
+                android.graphics.PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(source, 0, 0, paint);
+        return output;
+    }
+
     private void reloadPinnedApps() {
         pba = PinnedBlockedApps.getInstance(this);
         pinnedApps.clear();
         pinnedApps.addAll(pba.getPinnedApps());
         adapter.notifyDataSetChanged();
-    }
-
-    private void saveSortedList() {
-        List<AppEntry> snapshot = new ArrayList<>(pinnedApps);
-        pba.getPinnedApps().clear();
-        for(AppEntry e : snapshot) {
-            pba.getPinnedApps().add(e);
-        }
-        pba.forceSave(this);
     }
 
     @Override
@@ -250,7 +293,13 @@ public class PinnedAppsActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        saveSortedList();
+        // Sync current order to persistent store
+        List<AppEntry> snapshot = new ArrayList<>(pinnedApps);
+        pba.getPinnedApps().clear();
+        for(AppEntry e : snapshot) {
+            pba.getPinnedApps().add(e);
+        }
+        pba.forceSave(this);
         U.restartTaskbar(this);
     }
 }
